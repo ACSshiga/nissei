@@ -6,7 +6,7 @@
 
 ### バックエンド
 - **FastAPI** (Python 3.11)
-- **PostgreSQL 15** (データベース)
+- **Supabase** (PostgreSQL データベース)
 - **SQLAlchemy** (ORM)
 - **JWT認証**
 - **MinIO** (S3互換ストレージ)
@@ -34,18 +34,27 @@ git clone <repository-url>
 cd nissei
 ```
 
-2. 環境変数ファイルをコピー
+2. Supabaseプロジェクトのセットアップ
+   - [Supabase](https://supabase.com)でプロジェクトを作成
+   - データベース接続情報を取得
+
+3. 環境変数ファイルを設定
 ```bash
 cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
 ```
 
-3. Docker Composeで起動
+`backend/.env`に以下を設定：
+```env
+DATABASE_URL=postgresql://postgres:[YOUR_PASSWORD]@db.[YOUR_PROJECT_REF].supabase.co:5432/postgres
+```
+
+4. Docker Composeで起動
 ```bash
 docker-compose up -d
 ```
 
-4. ブラウザでアクセス
+5. ブラウザでアクセス
 - フロントエンド: http://localhost:3000
 - バックエンドAPI: http://localhost:8000
 - MinIO Console: http://localhost:9001

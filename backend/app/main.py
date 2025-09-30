@@ -29,7 +29,7 @@ async def health_check():
 
 # Include routers (will be created next)
 app.include_router(auth.router, prefix="/api/auth", tags=["認証"])
-app.include_router(projects.router, prefix="/api/projects", tags=["案件管理"])
+app.include_router(projects.router, tags=["案件管理"])
 app.include_router(worklogs.router, prefix="/api/worklogs", tags=["工数入力"])
 app.include_router(invoices.router, prefix="/api/invoices", tags=["請求"])
 app.include_router(materials.router, prefix="/api/materials", tags=["資料"])

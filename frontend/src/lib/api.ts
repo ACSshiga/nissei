@@ -43,23 +43,36 @@ export interface User {
 export interface Project {
   id: string;
   management_no: string;
-  series?: string;
+  machine_series_id?: string;
   generation?: string;
   tonnage?: string;
   spec_tags?: string;
   machine_no?: string;
   commission_content?: string;
-  inquiry_type?: string;
-  work_category?: string;
+  toiawase_id?: string;
+  sagyou_kubun_id?: string;
   estimated_hours?: number;
   actual_hours: number;
-  status: string;
+  shinchoku_id?: string;
   start_date?: string;
   completion_date?: string;
   drawing_deadline?: string;
+  is_active: boolean;
   created_by?: string;
   created_at: string;
   updated_at: string;
+  // マスタ名称（JOIN結果）
+  machine_series_name?: string;
+  toiawase_name?: string;
+  sagyou_kubun_name?: string;
+  shinchoku_name?: string;
+}
+
+export interface ProjectListResponse {
+  projects: Project[];
+  total: number;
+  page: number;
+  per_page: number;
 }
 
 export interface WorkLog {
@@ -161,19 +174,25 @@ export const api = {
 
   // 案件管理
   projects: {
-    list: (token: string, params?: { page?: number; per_page?: number; status?: string; machine_no?: string }) => {
+    list: (token: string, params?: {
+      page?: number;
+      per_page?: number;
+      shinchoku_id?: string;
+      sagyou_kubun_id?: string;
+      machine_no?: string;
+      management_no?: string;
+      include_inactive?: boolean;
+    }) => {
       const queryParams = new URLSearchParams();
       if (params?.page) queryParams.append('page', params.page.toString());
       if (params?.per_page) queryParams.append('per_page', params.per_page.toString());
-      if (params?.status) queryParams.append('status', params.status);
+      if (params?.shinchoku_id) queryParams.append('shinchoku_id', params.shinchoku_id);
+      if (params?.sagyou_kubun_id) queryParams.append('sagyou_kubun_id', params.sagyou_kubun_id);
       if (params?.machine_no) queryParams.append('machine_no', params.machine_no);
+      if (params?.management_no) queryParams.append('management_no', params.management_no);
+      if (params?.include_inactive) queryParams.append('include_inactive', 'true');
 
-      return apiFetch<{
-        projects: Project[];
-        total: number;
-        page: number;
-        per_page: number;
-      }>(`/api/projects?${queryParams}`, { token });
+      return apiFetch<ProjectListResponse>(`/api/projects?${queryParams}`, { token });
     },
 
     get: (token: string, projectId: string) =>
