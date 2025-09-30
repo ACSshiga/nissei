@@ -2,7 +2,9 @@
 
 ## YOU MUST:
 
-- 全ての TODO 完了またはユーザー のアクションが必要な際は最後に一度だけ `afplay /System/Library/Sounds/Sosumi.aiff` コマンドを実行して通知する
+- 全ての TODO 完了またはユーザーのアクションが必要な際は最後に一度だけ通知音を実行する
+  - **Windows環境**: `powershell -Command "[console]::beep(800, 300)"` を実行
+  - **macOS環境**: `afplay /System/Library/Sounds/Sosumi.aiff` を実行
 - 回答は日本語で行ってください
 - TODO には必ずブランチ作成・実装内容のテスト・コミット・push・PR 作成（まだ作成されていない場合）が含まれるべきです
 
