@@ -1,11 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.core.database import engine, Base
 from app.api import auth, projects, worklogs, invoices, materials, checklists, masters
 
-# Create database tables
-Base.metadata.create_all(bind=engine)
+# Supabase Clientを使用するため、テーブル作成は不要（Supabase側で管理）
 
 app = FastAPI(
     title="Nissei 工数管理システム",
