@@ -34,4 +34,4 @@ app.include_router(worklogs.router, prefix="/api/worklogs", tags=["工数入力"
 app.include_router(invoices.router, prefix="/api/invoices", tags=["請求"])
 app.include_router(materials.router, prefix="/api/materials", tags=["資料"])
 app.include_router(checklists.router, prefix="/api/checklists", tags=["注意点"])
-app.include_router(masters.router, prefix="/api/masters", tags=["マスタ"])
+app.include_router(masters.router, tags=["マスタ"])
