@@ -92,6 +92,52 @@ export interface WorkLogSummary {
   }>;
 }
 
+// マスタデータ型定義
+export interface MasterShinchoku {
+  id: string;
+  status_name: string;
+  background_color?: string;
+  completion_trigger: boolean;
+  start_date_trigger: boolean;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MasterSagyouKubun {
+  id: string;
+  kubun_name: string;
+  background_color?: string;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MasterToiawase {
+  id: string;
+  status_name: string;
+  background_color?: string;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MachineSeriesMaster {
+  id: string;
+  series_name: string;
+  display_name: string;
+  description?: string;
+  category?: string;
+  checklist_template_category?: string;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export const api = {
   // 認証
   auth: {
@@ -197,5 +243,132 @@ export const api = {
 
     getSummary: (token: string, projectId: string) =>
       apiFetch<WorkLogSummary>(`/api/worklogs/summary/${projectId}`, { token }),
+  },
+
+  // マスタ管理
+  masters: {
+    // 進捗マスタ
+    shinchoku: {
+      list: (token: string, includeInactive?: boolean) => {
+        const params = includeInactive ? '?include_inactive=true' : '';
+        return apiFetch<MasterShinchoku[]>(`/api/masters/shinchoku${params}`, { token });
+      },
+
+      get: (token: string, id: string) =>
+        apiFetch<MasterShinchoku>(`/api/masters/shinchoku/${id}`, { token }),
+
+      create: (token: string, data: Omit<MasterShinchoku, 'id' | 'created_at' | 'updated_at'>) =>
+        apiFetch<MasterShinchoku>('/api/masters/shinchoku', {
+          method: 'POST',
+          body: JSON.stringify(data),
+          token,
+        }),
+
+      update: (token: string, id: string, data: Partial<Omit<MasterShinchoku, 'id' | 'created_at' | 'updated_at'>>) =>
+        apiFetch<MasterShinchoku>(`/api/masters/shinchoku/${id}`, {
+          method: 'PUT',
+          body: JSON.stringify(data),
+          token,
+        }),
+
+      delete: (token: string, id: string) =>
+        apiFetch<void>(`/api/masters/shinchoku/${id}`, {
+          method: 'DELETE',
+          token,
+        }),
+    },
+
+    // 作業区分マスタ
+    sagyouKubun: {
+      list: (token: string, includeInactive?: boolean) => {
+        const params = includeInactive ? '?include_inactive=true' : '';
+        return apiFetch<MasterSagyouKubun[]>(`/api/masters/sagyou-kubun${params}`, { token });
+      },
+
+      get: (token: string, id: string) =>
+        apiFetch<MasterSagyouKubun>(`/api/masters/sagyou-kubun/${id}`, { token }),
+
+      create: (token: string, data: Omit<MasterSagyouKubun, 'id' | 'created_at' | 'updated_at'>) =>
+        apiFetch<MasterSagyouKubun>('/api/masters/sagyou-kubun', {
+          method: 'POST',
+          body: JSON.stringify(data),
+          token,
+        }),
+
+      update: (token: string, id: string, data: Partial<Omit<MasterSagyouKubun, 'id' | 'created_at' | 'updated_at'>>) =>
+        apiFetch<MasterSagyouKubun>(`/api/masters/sagyou-kubun/${id}`, {
+          method: 'PUT',
+          body: JSON.stringify(data),
+          token,
+        }),
+
+      delete: (token: string, id: string) =>
+        apiFetch<void>(`/api/masters/sagyou-kubun/${id}`, {
+          method: 'DELETE',
+          token,
+        }),
+    },
+
+    // 問い合わせマスタ
+    toiawase: {
+      list: (token: string, includeInactive?: boolean) => {
+        const params = includeInactive ? '?include_inactive=true' : '';
+        return apiFetch<MasterToiawase[]>(`/api/masters/toiawase${params}`, { token });
+      },
+
+      get: (token: string, id: string) =>
+        apiFetch<MasterToiawase>(`/api/masters/toiawase/${id}`, { token }),
+
+      create: (token: string, data: Omit<MasterToiawase, 'id' | 'created_at' | 'updated_at'>) =>
+        apiFetch<MasterToiawase>('/api/masters/toiawase', {
+          method: 'POST',
+          body: JSON.stringify(data),
+          token,
+        }),
+
+      update: (token: string, id: string, data: Partial<Omit<MasterToiawase, 'id' | 'created_at' | 'updated_at'>>) =>
+        apiFetch<MasterToiawase>(`/api/masters/toiawase/${id}`, {
+          method: 'PUT',
+          body: JSON.stringify(data),
+          token,
+        }),
+
+      delete: (token: string, id: string) =>
+        apiFetch<void>(`/api/masters/toiawase/${id}`, {
+          method: 'DELETE',
+          token,
+        }),
+    },
+
+    // 機種シリーズマスタ
+    machineSeries: {
+      list: (token: string, includeInactive?: boolean) => {
+        const params = includeInactive ? '?include_inactive=true' : '';
+        return apiFetch<MachineSeriesMaster[]>(`/api/masters/machine-series${params}`, { token });
+      },
+
+      get: (token: string, id: string) =>
+        apiFetch<MachineSeriesMaster>(`/api/masters/machine-series/${id}`, { token }),
+
+      create: (token: string, data: Omit<MachineSeriesMaster, 'id' | 'created_at' | 'updated_at'>) =>
+        apiFetch<MachineSeriesMaster>('/api/masters/machine-series', {
+          method: 'POST',
+          body: JSON.stringify(data),
+          token,
+        }),
+
+      update: (token: string, id: string, data: Partial<Omit<MachineSeriesMaster, 'id' | 'created_at' | 'updated_at'>>) =>
+        apiFetch<MachineSeriesMaster>(`/api/masters/machine-series/${id}`, {
+          method: 'PUT',
+          body: JSON.stringify(data),
+          token,
+        }),
+
+      delete: (token: string, id: string) =>
+        apiFetch<void>(`/api/masters/machine-series/${id}`, {
+          method: 'DELETE',
+          token,
+        }),
+    },
   },
 };
