@@ -3,19 +3,39 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { api, Project } from '@/lib/api';
+import { api, Project, MasterShinchoku, MasterSagyouKubun } from '@/lib/api';
 import { authStorage } from '@/lib/auth';
 
 export default function ProjectsPage() {
   const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
+  const [shinchokuList, setShinchokuList] = useState<MasterShinchoku[]>([]);
+  const [sagyouKubunList, setSagyouKubunList] = useState<MasterSagyouKubun[]>([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState('');
+  const [shinchokuFilter, setShinchokuFilter] = useState('');
+  const [sagyouKubunFilter, setSagyouKubunFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
+    loadMasters();
     loadProjects();
-  }, [statusFilter]);
+  }, [shinchokuFilter, sagyouKubunFilter]);
+
+  const loadMasters = async () => {
+    const token = authStorage.getToken();
+    if (!token) return;
+
+    try {
+      const [shinchoku, sagyouKubun] = await Promise.all([
+        api.masters.shinchoku.list(token, false),
+        api.masters.sagyouKubun.list(token, false),
+      ]);
+      setShinchokuList(shinchoku);
+      setSagyouKubunList(sagyouKubun);
+    } catch (error) {
+      console.error('マスタデータの取得に失敗:', error);
+    }
+  };
 
   const loadProjects = async () => {
     const token = authStorage.getToken();
@@ -26,7 +46,8 @@ export default function ProjectsPage() {
 
     try {
       const response = await api.projects.list(token, {
-        status: statusFilter || undefined,
+        shinchoku_id: shinchokuFilter || undefined,
+        sagyou_kubun_id: sagyouKubunFilter || undefined,
         per_page: 100,
       });
       setProjects(response.projects);
@@ -53,15 +74,21 @@ export default function ProjectsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* ヘッダー */}
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-900">案件一覧</h1>
-          <Link href="/dashboard">
-            <button className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md">
-              ダッシュボードに戻る
-            </button>
-          </Link>
+          <div className="flex gap-4">
+            <Link href="/projects/new">
+              <button className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md">
+                新規案件
+              </button>
+            </Link>
+            <Link href="/dashboard">
+              <button className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md">
+                ダッシュボードに戻る
+              </button>
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -71,20 +98,39 @@ export default function ProjectsPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                ステータス
+                進捗
               </label>
               <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
+                value={shinchokuFilter}
+                onChange={(e) => setShinchokuFilter(e.target.value)}
                 className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="">全て</option>
-                <option value="進行中">進行中</option>
-                <option value="完了">完了</option>
-                <option value="保留">保留</option>
+                {shinchokuList.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.status_name}
+                  </option>
+                ))}
               </select>
             </div>
-            <div className="md:col-span-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                作業区分
+              </label>
+              <select
+                value={sagyouKubunFilter}
+                onChange={(e) => setSagyouKubunFilter(e.target.value)}
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">全て</option>
+                {sagyouKubunList.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.kubun_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 検索（管理No / 機番）
               </label>
@@ -118,10 +164,13 @@ export default function ProjectsPage() {
                     機番
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    シリーズ
+                    機種シリーズ
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    ステータス
+                    進捗
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    作業区分
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     予定工数
@@ -130,7 +179,7 @@ export default function ProjectsPage() {
                     実績工数
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    開始日
+                    仕掛日
                   </th>
                 </tr>
               </thead>
@@ -146,20 +195,13 @@ export default function ProjectsPage() {
                       {project.machine_no || '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {project.series || '-'}
+                      {project.machine_series_name || '-'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          project.status === '完了'
-                            ? 'bg-green-100 text-green-800'
-                            : project.status === '保留'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-blue-100 text-blue-800'
-                        }`}
-                      >
-                        {project.status}
-                      </span>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {project.shinchoku_name || '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {project.sagyou_kubun_name || '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {project.estimated_hours ? formatMinutesToHours(project.estimated_hours) : '-'}
