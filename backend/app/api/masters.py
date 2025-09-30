@@ -66,7 +66,7 @@ def create_shinchoku(
 
     new_item = {
         "id": str(uuid.uuid4()),
-        **data.model_dump()
+        **data.model_dump(mode="json")
     }
     response = db.table("master_shinchoku").insert(new_item).execute()
 
@@ -122,7 +122,7 @@ def update_shinchoku(
             )
 
     # 更新
-    update_data = data.model_dump(exclude_unset=True)
+    update_data = data.model_dump(exclude_unset=True, mode="json")
     response = db.table("master_shinchoku").update(update_data).eq("id", str(item_id)).execute()
 
     if not response.data:
@@ -188,7 +188,7 @@ def create_sagyou_kubun(
 
     new_item = {
         "id": str(uuid.uuid4()),
-        **data.model_dump()
+        **data.model_dump(mode="json")
     }
     response = db.table("master_sagyou_kubun").insert(new_item).execute()
 
@@ -243,7 +243,7 @@ def update_sagyou_kubun(
                 detail="この作業区分名は既に登録されています"
             )
 
-    update_data = data.model_dump(exclude_unset=True)
+    update_data = data.model_dump(exclude_unset=True, mode="json")
     response = db.table("master_sagyou_kubun").update(update_data).eq("id", str(item_id)).execute()
 
     if not response.data:
@@ -309,7 +309,7 @@ def create_toiawase(
 
     new_item = {
         "id": str(uuid.uuid4()),
-        **data.model_dump()
+        **data.model_dump(mode="json")
     }
     response = db.table("master_toiawase").insert(new_item).execute()
 
@@ -364,7 +364,7 @@ def update_toiawase(
                 detail="このステータス名は既に登録されています"
             )
 
-    update_data = data.model_dump(exclude_unset=True)
+    update_data = data.model_dump(exclude_unset=True, mode="json")
     response = db.table("master_toiawase").update(update_data).eq("id", str(item_id)).execute()
 
     if not response.data:
@@ -430,7 +430,7 @@ def create_machine_series(
 
     new_item = {
         "id": str(uuid.uuid4()),
-        **data.model_dump()
+        **data.model_dump(mode="json")
     }
     response = db.table("machine_series_master").insert(new_item).execute()
 
@@ -485,7 +485,7 @@ def update_machine_series(
                 detail="このシリーズ名は既に登録されています"
             )
 
-    update_data = data.model_dump(exclude_unset=True)
+    update_data = data.model_dump(exclude_unset=True, mode="json")
     response = db.table("machine_series_master").update(update_data).eq("id", str(item_id)).execute()
 
     if not response.data:

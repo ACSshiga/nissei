@@ -34,7 +34,7 @@ def create_worklog(
     # 新規工数入力作成
     new_worklog = {
         "id": str(uuid.uuid4()),
-        **worklog_data.model_dump(),
+        **worklog_data.model_dump(mode="json"),
         "user_id": current_user["id"],
     }
 
@@ -127,7 +127,7 @@ def update_worklog(
     old_duration = worklog["duration_minutes"]
 
     # 更新データ
-    update_data = worklog_data.model_dump(exclude_unset=True)
+    update_data = worklog_data.model_dump(exclude_unset=True, mode="json")
     new_duration = update_data.get("duration_minutes", old_duration)
 
     # 作業時間が変更される場合、案件の実績工数を調整

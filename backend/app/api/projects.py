@@ -40,7 +40,7 @@ def create_project(
     # 新規案件作成
     new_project = {
         "id": str(uuid.uuid4()),
-        **project_data.model_dump(),
+        **project_data.model_dump(mode="json"),
         "created_by": current_user["id"],
         "actual_hours": 0,
         "is_active": True,
@@ -164,7 +164,7 @@ def update_project(
             )
 
     # 更新
-    update_data = project_data.model_dump(exclude_unset=True)
+    update_data = project_data.model_dump(exclude_unset=True, mode="json")
     response = db.table("projects").update(update_data).eq("id", str(project_id)).execute()
 
     if not response.data:
