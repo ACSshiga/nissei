@@ -48,8 +48,8 @@ docker-compose up -d
 以下のサービスが起動します：
 - **フロントエンド**: http://localhost:3000
 - **バックエンドAPI**: http://localhost:8000
-- **PostgreSQL**: localhost:5432
-- **MinIO**: http://localhost:9000
+
+> **注**: データベースは Supabase（クラウド）を使用しており、ローカルの PostgreSQL は不要です。
 
 ### 4. 動作確認
 
@@ -97,9 +97,8 @@ uvicorn app.main:app --reload
 |---------|--------|-----|
 | フロントエンド | 3000 | http://localhost:3000 |
 | バックエンド | 8000 | http://localhost:8000 |
-| PostgreSQL | 5432 | localhost:5432 |
-| MinIO | 9000 | http://localhost:9000 |
-| MinIO Console | 9001 | http://localhost:9001 |
+
+> **注**: PostgreSQL は Supabase（クラウド）、MinIO は現在未使用のため、上記2つのポートのみが必要です。
 
 ### ポート競合時の対応
 
@@ -145,15 +144,16 @@ docker-compose up -d --build
 
 ### データベース接続エラー
 
-1. PostgreSQLが起動しているか確認
+1. Supabase 環境変数を確認
    ```bash
-   docker ps
+   echo $SUPABASE_URL
+   echo $SUPABASE_KEY
+   echo $SUPABASE_PROJECT_REF
    ```
 
-2. 環境変数を確認
-   ```bash
-   echo $DATABASE_URL
-   ```
+2. Supabase プロジェクトが正常に動作しているか確認
+   - Supabase ダッシュボード: https://supabase.com/dashboard
+   - プロジェクト参照: wwyrthkizkcgndyorcww
 
 ### フロントエンドビルドエラー
 
