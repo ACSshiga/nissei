@@ -93,15 +93,59 @@ kill -9 <PID>
 ユーザー名: qa_shared
 ユーザー ID（固定 UUID v4 想定）: 00000000-0000-4000-8000-000000000000TEST_EMAIL=qa+nissei@example.com
 
+## 🔔 Discord Webhook通知設定
+
+### 概要
+PRコメント（Codexレビュー含む）やPR作成・更新イベントをDiscordへ自動通知する設定です。
+
+### 設定済み通知イベント
+- ✅ **Issue comments** - PRへのコメント（Codexレビュー含む）
+- ✅ **Pull requests** - PR作成・クローズ・マージ
+- ✅ **Pull request reviews** - レビュー完了
+- ✅ **Pull request review comments** - レビューコメント
+
+### 初回設定手順（設定済み）
+
+<details>
+<summary>Discord Webhook URL取得方法</summary>
+
+1. Discordサーバーで通知用チャンネル（例: `#github-notifications`）を作成
+2. チャンネル設定 → 連携サービス → Webhookを作成
+3. Webhook URLをコピー（例: `https://discord.com/api/webhooks/...`）
+
+</details>
+
+<details>
+<summary>GitHub Webhook設定方法</summary>
+
+1. GitHubリポジトリの Settings → Webhooks にアクセス
+   - URL: https://github.com/ShigaRyunosuke10/nissei/settings/hooks
+2. 「Add webhook」をクリック
+3. 以下を入力：
+   - **Payload URL**: Discord Webhook URL + `/github`（末尾に必ず `/github` を追加）
+   - **Content type**: `application/json`
+   - **Which events**: 「Let me select individual events」を選択
+     - Issue comments
+     - Pull requests
+     - Pull request reviews
+     - Pull request review comments
+   - **Active**: チェックを入れる
+4. 「Add webhook」をクリック
+
+</details>
+
+### 動作確認
+PRにコメントを投稿すると、Discordの `#github-notifications` チャンネルに通知が届きます。
+
 ### 🔄 Claude Code と Codex CLI の使い分けルール
 
-1. **通常の実装タスク（新規機能、軽微な修正、リファクタなど）**  
+1. **通常の実装タスク（新規機能、軽微な修正、リファクタなど）**
    → Claude Code を利用する
 
-2. **バグ修正が 3 回以上失敗した場合**  
+2. **バグ修正が 3 回以上失敗した場合**
    → Codex CLI (MCP) に切り替えて、詳細な解析や原因追跡を依頼する
 
-3. **アーキテクチャ設計やシステム全体の相談**  
+3. **アーキテクチャ設計やシステム全体の相談**
    → Codex CLI (MCP) に相談する（Claude Code より深い推論能力を活用）
 
 ## 🔗 参考ドキュメント
