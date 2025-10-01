@@ -1,139 +1,159 @@
 # Claude Code Configuration
 
-## YOU MUST:
+このファイルはClaude Codeの動作設定を定義します。
 
-- 全ての TODO 完了またはユーザー のアクションが必要な際は最後に一度だけ `afplay /System/Library/Sounds/Sosumi.aiff` コマンドを実行して通知する
-- 回答は日本語で行ってください
-- TODO には必ずブランチ作成・実装内容のテスト・コミット・push・PR 作成（まだ作成されていない場合）が含まれるべきです
+## 基本ルール
 
-## issue 作成時の注意事項
+- 回答は日本語で行う
+- TODO管理を活用してタスク進行を可視化
+- 全TODO完了時は通知音を再生
 
-issue 作成時の注意事項を ai-rules/ISSUE_GUIDELINES.md にまとめています
-issue 作成時は必ず確認して必ずこの内容に従って issue 作成を行ってください。
-
-## Repository 設定
+## リポジトリ設定
 
 - **リポジトリ名**: nissei
-- **MCP GitHub API**: 常に `nissei` リポジトリを使用
+- **Owner**: ShigaRyunosuke10
 - **Git remote**: origin
 
-## アプリケーションポート設定
+## ポート設定（固定・変更禁止）
 
-以下のポートで各サービスが動作します：
+| サービス | ポート |
+|---------|--------|
+| フロントエンド | 3000 |
+| バックエンド | 8000 |
 
-### 開発環境（Docker Compose）
+ポート競合時は他のプロセスをkillして既定ポートを使用すること。
 
-- 以下のポート番号を勝手に変更することは絶対にあってはなりません。
-- **フロントエンド**: `http://localhost:3000` (ポート: 3000)
-- **バックエンド API**: `http://localhost:8000` (ポート: 8000)
+## 開発ワークフロー
 
-## 関数・エンドポイント作成時の注意事項
+詳細は [ai-rules/WORKFLOW.md](./ai-rules/WORKFLOW.md) を参照。
 
-- 命名規則などを@ai-rules/API_FUNCTION_NAMING.md にまとめています
-- 関数やエンドポイントの作成時には必ず確認し、内容に従って実装を行ってください。
+### 作業開始時
+1. 専用ブランチを作成（`feat-*`, `fix-*`, `docs-*` 等）
+2. mainブランチでの直接作業は絶対禁止
 
-## 修正機能追加の際の作業開始時・終了時に必ず実施すること。必ず毎回全て todo に含めてください。
+### 作業終了時
+1. 変更をコミット（[コミット規約](./ai-rules/COMMIT_GUIDELINES.md)に従う）
+2. リモートブランチにpush
+3. PRを作成（[PR規約](./ai-rules/PR_GUIDELINES.md)に従う）
+4. **必須**: `@codex review` コメントを投稿してCodexレビューを依頼
+5. レビュー完了後にmainへマージ
 
-- 以下の操作は作業開始時に必ず行ってください
-  - **作業開始時**: 必ず専用ブランチを作成する（feat-<機能名>、fix-<修正内容>等）
-  - **main ブランチでの直接作業は絶対禁止**: いかなる変更も main ブランチに直接コミットしない
-- 以下を必ず作業終了時に実行してください。
-  1. 作業内容をコミット
-  2. リモートブランチに push (`git push -u origin <ブランチ名>`)
-  3. PR 作成 (MCP で PR 作成)
-  4. **mainブランチへのマージ前には必ずCodexレビューを実施**
-     - PRに `@codex review` とコメントしてCodexのレビューを依頼
-     - Codexの指摘事項を確認し、必要に応じて修正
-     - レビュー完了後にマージを実施
-     - 💬 **Discord通知**: PRコメント・レビューは自動的にDiscordへ通知されます
-  - @ai-rules/COMMIT_AND_PR_GUIDELINES.md にガイドラインを記述しています。上記の作業時には必ず確認して必ず内容に従って作業を行ってください。
+## コミット前の必須確認
 
-## 修正の際の注意点
+- 動作確認を実施
+- E2Eテストを実施（[テストガイド](./ai-rules/TESTING.md)）
+- エラーがない状態でコミット
 
-- 修正を行う際には必ず以下のことに順守してください
-  - 該当修正によって他の処理に問題がないか慎重に確認を行って作業を行ってください。
-  - 他の動作に関しても修正が必要な場合は既存の期待値の動作が正常に起動するように修正してください。
+## 命名規則
 
-## コミット前に確認すること（必ず実施）
+詳細は [ai-rules/NAMING_CONVENTIONS.md](./ai-rules/NAMING_CONVENTIONS.md) を参照。
 
-- コミット前には必ず動作確認を行って動作が問題ないかを確認してください
-  - 動作確認中にエラーが発見された際はタスクを更新してください
-  - コミットする際はエラーがない状態で行ってください
+### 主要ルール
+- **TypeScript/JavaScript**: camelCase（変数・関数）、PascalCase（クラス・型）
+- **Python**: snake_case（変数・関数）、PascalCase（クラス）
+- **APIエンドポイント**: kebab-case（小文字）、複数形の名詞
+- **環境変数**: UPPER_SNAKE_CASE（クォート無し）
+- **データベース**: snake_case（テーブル・カラム）
 
-## 開発時の注意点
+## テスト
 
-- Tailwind CSS を優先して使用し、重複スタイルは避けること
-- バックエンド API は FastAPI で定義し、リクエスト/レスポンススキーマには Pydantic モデルを使うこと
-- .env ファイル内のキーは UPPER_SNAKE_CASE で記述し、値にクォートは付けないこと
+詳細は [ai-rules/TESTING.md](./ai-rules/TESTING.md) を参照。
 
-## ファイル作成時の注意点（ファイル作成時必ず確認）
+### テストユーザー情報
+```
+Email: qa+shared@example.com
+Password: SharedDev!2345
+Username: qa_shared
+User ID: 00000000-0000-4000-8000-000000000000
+```
 
-- ファイル作成時に、そのファイルが Github に挙げられるべきではないと判断した場合には、必ず.gitignore に指定してください。
+### E2Eテスト実施
+- Playwright MCPツールを使用
+- コミット前に必ず実施
 
-## 注意：
+## コードレビュー
 
-すでにポートが使用されている場合（例: 3000 番や 8000 番など）、起動に失敗することがあります。
-その場合は該当ポートを使用している場合は、そのポートを使用してください。
-別の PJ にて使用されている場合は、そのプロセスを特定し、kill することで使用してください。
+詳細は [ai-rules/CODE_REVIEW.md](./ai-rules/CODE_REVIEW.md) を参照。
 
-# 例: ポート 8000 が使用中の場合
+### Codexレビュー（必須）
+1. PR作成直後に `@codex review` とコメント
+2. MCP GitHub APIの `add_issue_comment` を使用
+3. レビュー結果はDiscordへ自動通知
 
-lsof -i :8000
-kill -9 <PID>
+## Discord通知
 
-## 動作確認・テスト時の必須確認事項（コミット前に必ず実施されるべきです）
+詳細は [ai-rules/NOTIFICATION_SETUP.md](./ai-rules/NOTIFICATION_SETUP.md) を参照。
 
-- テスト・動作確認の際は playwright の MCP ツールを使用して動作確認を行ってください。
-- テスト・動作確認は修正を行って際は必ず行ってください。
-- E2E テストとしてユーザ目線での動作が問題ないかしっかりと確認してください。
-  開発・テスト時は以下のユーザー情報を使用してください
+### 通知イベント
+- PRコメント（Codexレビュー含む）
+- PR作成・更新・マージ
+- Pull Requestレビュー
 
-メールアドレス: qa+shared@example.com
-パスワード: SharedDev!2345
-ユーザー名: qa_shared
-ユーザー ID（固定 UUID v4 想定）: 00000000-0000-4000-8000-000000000000TEST_EMAIL=qa+nissei@example.com
+通知先: Discord `#github-notifications` チャンネル
 
-### 🔄 Claude Code と Codex CLI の使い分けルール
+## MCPサーバー
 
-1. **通常の実装タスク（新規機能、軽微な修正、リファクタなど）**  
-   → Claude Code を利用する
+詳細は [ai-rules/MCP_USAGE.md](./ai-rules/MCP_USAGE.md) を参照。
 
-2. **バグ修正が 3 回以上失敗した場合**  
-   → Codex CLI (MCP) に切り替えて、詳細な解析や原因追跡を依頼する
+### 利用可能なMCP
+- **context7**: RAG/検索支援
+- **playwright**: E2Eテスト自動化
+- **github**: Issue/PR操作
+- **desktop-commander**: ローカルPC操作
+- **serena**: 高度な自動化
+- **supabase**: DB/認証/ストレージ連携
+- **codex**: 深掘り解析・アーキテクチャ相談
 
-3. **アーキテクチャ設計やシステム全体の相談**  
-   → Codex CLI (MCP) に相談する（Claude Code より深い推論能力を活用）
+### 使い分けルール
+- **通常タスク**: Claude Code
+- **バグ修正が3回以上失敗**: Codex CLI
+- **アーキテクチャ設計**: Codex CLI
 
-## 🔗 参考ドキュメント
+## Context7利用
 
-Claude Code / Codex CLI と併用する MCP サーバーの使い方については  
-[ai-rules/MCP_GUIDE.md](./ai-rules/MCP_GUIDE.md) に詳細をまとめています。
+最新ライブラリ仕様を反映させたい場合に使用。
 
-- 各 MCP サーバーの用途
-- 代表的なプロンプト例
-- 注意点（セキュリティ・ポート・環境変数など）
-- Issue / PR 作成フローとの関連
+```
+use context7 — [質問内容]
+```
 
-開発時には必ず確認してください。
+## プロジェクト固有情報
 
-### 🧠 Context7（コンテキスト 7） 利用ルール
+以下は `docs/` ディレクトリを参照：
 
-以下の状況で Context7 を活用し、応答の精度と整合性を高めることを推奨します：
+- [環境構築手順](./docs/SETUP.md)
+- [システムアーキテクチャ](./docs/ARCHITECTURE.md)
+- [API仕様](./docs/API.md)
+- [データベース設計](./docs/DATABASE.md)
+- [要件定義](./docs/requirements-definition.md)
 
-1. **応答に最新のライブラリ仕様 / ドキュメントを正確に反映させたい場合**  
-   → `use context7` プロンプト指定を行い、最新のソースから情報を取得する
+## ファイル構造
 
-2. **長文や複雑な依存関係をもつ解析 / 要約 / コード生成**  
-   → 通常の Claude Code では文脈が不足しやすいため、Context7 を併用して文脈の広さを補う
+```
+nissei/
+├── CLAUDE.md              # このファイル（AI用設定）
+├── README.md              # プロジェクト概要（人間用）
+├── ai-rules/              # AI用汎用ルール
+│   ├── WORKFLOW.md
+│   ├── COMMIT_GUIDELINES.md
+│   ├── PR_GUIDELINES.md
+│   ├── NAMING_CONVENTIONS.md
+│   ├── CODE_REVIEW.md
+│   ├── TESTING.md
+│   ├── NOTIFICATION_SETUP.md
+│   └── MCP_USAGE.md
+├── docs/                  # プロジェクト固有情報
+│   ├── SETUP.md
+│   ├── ARCHITECTURE.md
+│   ├── API.md
+│   └── DATABASE.md
+├── frontend/              # Next.jsアプリ
+├── backend/               # FastAPIアプリ
+└── docker-compose.yml
+```
 
-3. **Codex CLI を使う際にも併用可**  
-   → Codex CLI で処理を担当するが、文脈補強に Context7 を組み込むよう指示可能
+## 注意事項
 
-4. **プロンプト記述例**
-
-   - `use context7 — Next.js で認証機能を実装するガイドを教えて`
-   - `use context7 — このライブラリの最新ドキュメントを参照して関数呼び出し例を示して`
-
-5. **制約・注意点**
-   - 機密情報の取り扱いには注意。必要に応じてセキュリティ確認を実施する
-   - Context7 を使っても、必ず生成結果の妥当性チェックを行うこと
+- .envファイルはUPPER_SNAKE_CASE、値にクォート無し
+- 機密情報は.gitignoreに追加
+- ファイル作成時はGitにコミットすべきか判断し、不要なら.gitignoreへ

@@ -1,140 +1,185 @@
-# Nissei 工数管理システム
+# 日誠（にっせい） - 建設プロジェクト管理システム
 
-工数管理と請求処理のためのWebアプリケーション（MVP版）
+建設プロジェクトの工事進捗、作業履歴、請求書、資材管理を一元管理するWebアプリケーションです。
 
-## 技術スタック
+## 🚀 クイックスタート
 
-### バックエンド
-- **FastAPI** (Python 3.11)
-- **Supabase** (PostgreSQL データベース)
-- **SQLAlchemy** (ORM)
-- **JWT認証**
-- **MinIO** (S3互換ストレージ)
+```bash
+# リポジトリのクローン
+git clone https://github.com/ShigaRyunosuke10/nissei.git
+cd nissei
+
+# 環境変数の設定
+cp .env.example .env
+# .envを編集して必要な値を設定
+
+# Docker Composeで起動
+docker-compose up -d
+
+# アクセス
+# フロントエンド: http://localhost:3000
+# バックエンドAPI: http://localhost:8000
+```
+
+詳細は [環境構築手順](./docs/SETUP.md) を参照してください。
+
+## ✨ 主な機能
+
+### プロジェクト管理
+- プロジェクトの作成・編集・削除
+- ステータス管理（計画中・進行中・完了）
+- 開始日・終了日の設定
+
+### 作業履歴管理
+- 日次の作業内容を記録
+- 作業時間の管理
+- プロジェクトごとの作業履歴一覧
+
+### 請求書管理
+- 請求書の作成・送信
+- 請求書番号の自動採番
+- ステータス管理（下書き・送信済み・支払済み）
+
+### 資材管理
+- 資材の登録・編集
+- カテゴリ別の管理
+- 単価・数量の管理
+
+### チェックリスト
+- プロジェクトごとのタスク管理
+- 完了状態の管理
+
+## 🛠 技術スタック
 
 ### フロントエンド
 - **Next.js 14** (App Router)
 - **TypeScript**
 - **Tailwind CSS**
-- **React Query**
+- **SWR** (データフェッチング)
+
+### バックエンド
+- **FastAPI**
+- **Python 3.11+**
+- **SQLAlchemy** (ORM)
+- **Pydantic** (バリデーション)
+- **JWT認証**
+
+### データベース
+- **Supabase** (PostgreSQL)
+- **MinIO** (ファイルストレージ)
 
 ### インフラ
-- **Docker Compose**
+- **Docker** & **Docker Compose**
+- **GitHub Actions** (CI/CD)
 
-## セットアップ
-
-### 前提条件
-- Docker Desktop がインストールされていること
-- Git がインストールされていること
-
-### 起動手順
-
-1. リポジトリをクローン
-```bash
-git clone <repository-url>
-cd nissei
-```
-
-2. Supabaseプロジェクトのセットアップ
-   - [Supabase](https://supabase.com)でプロジェクトを作成
-   - データベース接続情報を取得
-
-3. 環境変数ファイルを設定
-```bash
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
-```
-
-`backend/.env`に以下を設定：
-```env
-DATABASE_URL=postgresql://postgres:[YOUR_PASSWORD]@db.[YOUR_PROJECT_REF].supabase.co:5432/postgres
-```
-
-4. Docker Composeで起動
-```bash
-docker-compose up -d
-```
-
-5. ブラウザでアクセス
-- フロントエンド: http://localhost:3000
-- バックエンドAPI: http://localhost:8000
-- MinIO Console: http://localhost:9001
-
-## プロジェクト構造
+## 📁 プロジェクト構造
 
 ```
 nissei/
-├── backend/              # FastAPI バックエンド
-│   ├── app/
-│   │   ├── api/         # APIエンドポイント
-│   │   ├── core/        # コア設定
-│   │   ├── models/      # データベースモデル
-│   │   ├── schemas/     # Pydanticスキーマ
-│   │   └── services/    # ビジネスロジック
-│   ├── Dockerfile
-│   └── requirements.txt
-├── frontend/             # Next.js フロントエンド
-│   ├── src/
-│   │   ├── app/         # App Router
-│   │   ├── components/  # Reactコンポーネント
-│   │   └── lib/         # ユーティリティ
-│   ├── Dockerfile
-│   └── package.json
-├── docker-compose.yml    # Docker Compose設定
-└── requirements.md       # 要件定義書
+├── frontend/          # Next.jsフロントエンド
+├── backend/           # FastAPIバックエンド
+├── docs/              # プロジェクト固有ドキュメント
+├── ai-rules/          # AI用開発ルール（汎用）
+├── CLAUDE.md          # Claude Code設定
+└── docker-compose.yml
 ```
 
-## 主な機能
+## 📚 ドキュメント
 
-1. **認証システム**
-   - メール・パスワードによる独自認証
-   - JWT トークン認証
+### 開発者向け
+- [環境構築手順](./docs/SETUP.md)
+- [システムアーキテクチャ](./docs/ARCHITECTURE.md)
+- [API仕様書](./docs/API.md)
+- [データベース設計](./docs/DATABASE.md)
 
-2. **案件管理**
-   - PDF取込による案件自動登録
-   - 案件詳細管理
+### 開発ルール
+- [ワークフロー](./ai-rules/WORKFLOW.md)
+- [コミット規約](./ai-rules/COMMIT_GUIDELINES.md)
+- [PR作成ルール](./ai-rules/PR_GUIDELINES.md)
+- [命名規則](./ai-rules/NAMING_CONVENTIONS.md)
+- [コードレビュー](./ai-rules/CODE_REVIEW.md)
+- [テストガイド](./ai-rules/TESTING.md)
 
-3. **工数入力**
-   - 月グリッドUI（Excel風）
-   - 日別工数入力
+## 🔐 認証
 
-4. **請求処理**
-   - 月次請求締め処理
-   - Excel出力
+JWTトークンベースの認証システムを採用。
 
-5. **資料管理**
-   - 機種/機番ごとの資料管理
-   - URL・ファイル対応
+### テストユーザー
+```
+Email: qa+shared@example.com
+Password: SharedDev!2345
+```
 
-6. **注意点チェックリスト**
-   - テンプレート管理
-   - 案件別チェック項目
+## 🧪 テスト
 
-## 開発
-
-### バックエンド開発
-
+### E2Eテスト
 ```bash
-cd backend
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload
+npx playwright test
 ```
 
-### フロントエンド開発
-
+### フロントエンド単体テスト
 ```bash
 cd frontend
-npm install
-npm run dev
+npm test
 ```
 
-## API ドキュメント
+### バックエンド単体テスト
+```bash
+cd backend
+pytest
+```
 
-バックエンドを起動後、以下のURLでAPI ドキュメントを参照できます：
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
+## 🤝 コントリビューション
 
-## ライセンス
+### 開発フロー
+
+1. **ブランチ作成**
+   ```bash
+   git checkout -b feat-新機能名
+   ```
+
+2. **開発・テスト**
+   - コミット前にE2Eテストを実施
+   - エラーがない状態でコミット
+
+3. **PR作成**
+   - GitHub PRを作成
+   - `@codex review` コメントを投稿してCodexレビューを依頼
+
+4. **マージ**
+   - Codexレビュー承認後にmainへマージ
+
+詳細は [ワークフロー](./ai-rules/WORKFLOW.md) を参照。
+
+## 📞 サポート
+
+### Discord通知
+PRコメント・Codexレビューは自動的にDiscordへ通知されます。
+- チャンネル: `#github-notifications`
+
+### リポジトリ
+- GitHub: [ShigaRyunosuke10/nissei](https://github.com/ShigaRyunosuke10/nissei)
+
+## 📝 ライセンス
 
 Private - All Rights Reserved
+
+## 📌 ポート設定
+
+| サービス | ポート | URL |
+|---------|--------|-----|
+| フロントエンド | 3000 | http://localhost:3000 |
+| バックエンド | 8000 | http://localhost:8000 |
+| PostgreSQL | 5432 | localhost:5432 |
+| MinIO | 9000 | http://localhost:9000 |
+
+⚠️ **ポート番号は固定**：変更禁止
+
+## 🔗 関連リンク
+
+- [要件定義書](./docs/requirements-definition.md)
+- [機械学習分類アルゴリズム](./docs/machine-classification-algorithm.md)
+
+---
+
+Built with ❤️ by the Nissei Team
