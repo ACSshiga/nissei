@@ -23,38 +23,33 @@
 
 **参考**: [PR_GUIDELINES.md](./PR_GUIDELINES.md)
 
-### 2. Claude Code サブエージェント (code-reviewer) によるレビュー
+### 2. Task tool (general-purpose subagent) によるレビュー
 
-PRが作成されたら、**code-reviewer サブエージェント**を使用してレビューを依頼します。
+PRが作成されたら、**Task tool (general-purpose subagent)** を使用してレビューを依頼します。
 
-#### サブエージェントについて
+#### Task toolについて
 
-`.claude/agents/code-reviewer.md` に定義された専門的なコードレビューエージェントです。
-- 独立したコンテキストで動作
-- GitHub API ツールに特化したアクセス
+Claude Codeの標準機能です。
+- PRレビューを含む多様なタスクに対応
+- GitHub API連携による差分解析
 - 一貫したレビュー基準とフォーマット
 
 #### レビュー依頼方法
 
-以下のいずれかの方法でレビューを依頼します：
+以下のコマンドでレビューを依頼します：
 
-**方法1: 自動呼び出し（推奨）**
-
-PRを作成すると、Claude Codeが自動的にcode-reviewerサブエージェントを呼び出します。
-
-**方法2: 明示的な呼び出し**
-
-```
-> code-reviewerサブエージェントを使用してPR #[番号]をレビューしてください
+```typescript
+Task tool:
+- subagent_type: "general-purpose"
+- description: "Review PR #[番号]"
+- prompt: "PRをレビューして、Critical/Major/Minor問題を報告してください"
 ```
 
-または
+または、ユーザーが以下のように依頼することもできます：
 
 ```
 > PR #[番号]をレビューしてください
 ```
-
-（Claude Codeが適切なサブエージェントを選択します）
 
 #### レビュー観点
 
@@ -73,7 +68,7 @@ PRを作成すると、Claude Codeが自動的にcode-reviewerサブエージェ
 
 ### 3. レビュー結果の評価
 
-Claude Code サブエージェント (Task tool) からのレビュー結果を以下の基準で評価します：
+Task tool (general-purpose subagent) からのレビュー結果を以下の基準で評価します：
 
 #### マージ可
 
@@ -113,7 +108,7 @@ Claude Code サブエージェント (Task tool) からのレビュー結果を�
    ```
 
 3. **再レビュー依頼**
-   - PR更新後、再度Claude Code サブエージェント (Task tool) にレビュー依頼
+   - PR更新後、再度Task tool (general-purpose subagent) にレビュー依頼
    - すべてのCritical/Major問題が解決されるまで繰り返す
 
 ### 5. GitHub Issue作成（必要に応じて）
@@ -161,7 +156,7 @@ mcp__github__merge_pull_request
 - 変更点2
 - 変更点3
 
-レビュー実施済み（Claude Code サブエージェント）: <マージ判定>
+レビュー実施済み（Task tool）: <マージ判定>
 - セキュリティ: <評価>
 - 今後の改善点: Issue #XX, #YY で管理予定
 "
@@ -199,7 +194,7 @@ git checkout -b docs-update-<内容>
 
 # 3. ドキュメントを更新
 # 4. コミット・push・PR作成
-# 5. Claude Code サブエージェント (Task tool) レビュー → マージ（通常フロー）
+# 5. Task tool (general-purpose subagent) レビュー → マージ（通常フロー）
 ```
 
 ### 8. レビュー履歴の記録
@@ -212,7 +207,7 @@ git checkout -b docs-update-<内容>
 ## PR #XX: [タイトル]
 
 **マージ日時**: 2025-10-01
-**レビュアー**: Claude Code サブエージェント (Task tool)
+**レビュアー**: Task tool (general-purpose subagent)
 **判定**: [マージ可/マージ不可]
 
 ### 変更内容
@@ -261,7 +256,7 @@ git checkout -b docs-update-<内容>
 ### PR #22: 管理者パネルと工数入力の改善
 
 1. **PR作成**: feat-admin-panel-and-worklog-improvements → main
-2. **Claude Code サブエージェント (Task tool) レビュー**: マージ可（条件付き）
+2. **Task tool (general-purpose subagent) レビュー**: マージ可（条件付き）
    - Major問題3件（JWT改ざん対策、URL推測、エラーハンドリング）
    - Minor問題5件
 3. **評価**: バックエンドで適切に保護されており、実害は限定的と判断
@@ -272,7 +267,7 @@ git checkout -b docs-update-<内容>
 ### PR #21, #20: マージ不可（Critical問題あり）
 
 1. **PR作成**: 工数入力機能の改修
-2. **Claude Code サブエージェント (Task tool) レビュー**: マージ不可
+2. **Task tool (general-purpose subagent) レビュー**: マージ不可
    - **Critical問題**: データベーススキーマ不一致によるデータ損失
 3. **Issue作成**: Issue #23, #24 を作成
 4. **対応**: Issue修正後に再レビュー → マージ

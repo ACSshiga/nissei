@@ -35,7 +35,7 @@
 1. 変更をコミット（[コミット規約](./ai-rules/COMMIT_GUIDELINES.md)に従う）
 2. リモートブランチにpush
 3. PRを作成（[PR規約](./ai-rules/PR_GUIDELINES.md)に従う）
-4. **必須**: code-reviewer サブエージェントでレビューを依頼（[PRマージプロセス](./ai-rules/PR_MERGE_PROCESS.md)参照）
+4. **必須**: Task tool (general-purpose subagent)でレビューを依頼（[PRマージプロセス](./ai-rules/PR_MERGE_PROCESS.md)参照）
 5. レビュー完了後にmainへマージ
 6. **必須**: マージ後に docs/ の更新が必要か確認・更新
 
@@ -81,12 +81,12 @@ User ID: 00000000-0000-4000-8000-000000000000
 詳細は [ai-rules/PR_MERGE_PROCESS.md](./ai-rules/PR_MERGE_PROCESS.md) を参照。
 
 ### レビュー方法（必須）
-1. PR作成直後に **code-reviewer サブエージェント**でレビュー依頼（自動または明示的）
+1. PR作成直後に **Task tool (general-purpose subagent)**でレビュー依頼（自動または明示的）
 2. レビュー結果を評価（Critical/Major/Minor）
 3. 指摘事項を確認し、必要に応じて修正・Issue化
 4. レビュー承認後にmainへマージ
 
-**サブエージェント設定**: `.claude/agents/code-reviewer.md` に定義
+**サブエージェント設定**: `Task tool` に定義
 
 参考: [CODE_REVIEW.md](./ai-rules/CODE_REVIEW.md)（レビュー観点チェックリスト）
 
@@ -103,7 +103,7 @@ User ID: 00000000-0000-4000-8000-000000000000
 - **supabase**: DB/認証/ストレージ連携
 
 ### カスタムサブエージェント
-- **code-reviewer** (`.claude/agents/code-reviewer.md`): PRレビュー専門エージェント
+- **code-reviewer** (`Task tool`): PRレビュー専門エージェント
 
 ## Context7利用
 
