@@ -43,15 +43,12 @@ jobs:
             COMMENT_URL="${{ github.event.comment.html_url }}"
           fi
 
-          # コメント本文を最初の200文字に制限
-          COMMENT_PREVIEW=$(echo "$COMMENT_BODY" | head -c 200)
-          if [ ${#COMMENT_BODY} -gt 200 ]; then
-            COMMENT_PREVIEW="${COMMENT_PREVIEW}..."
-          fi
+          # コメント本文を最初の200文字に制限（UTF-8対応）
+          COMMENT_PREVIEW=$(echo "$COMMENT_BODY" | python3 -c "import sys; text = sys.stdin.read(); print(text[:200] + ('...' if len(text) > 200 else ''))")
 
-          # JSON用にコメントをエスケープ
-          COMMENT_PREVIEW_ESCAPED=$(echo "$COMMENT_PREVIEW" | jq -Rs .)
-          PR_TITLE_ESCAPED=$(echo "$PR_TITLE" | jq -Rs .)
+          # JSON用にコメントをエスケープ（エラーハンドリング付き）
+          COMMENT_PREVIEW_ESCAPED=$(echo "$COMMENT_PREVIEW" | jq -Rs . 2>/dev/null || echo '""')
+          PR_TITLE_ESCAPED=$(echo "$PR_TITLE" | jq -Rs . 2>/dev/null || echo '""')
 
           # Discordに通知を送信
           curl -H "Content-Type: application/json" \
