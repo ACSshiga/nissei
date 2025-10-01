@@ -59,7 +59,10 @@ minio_data/
 
 # MCP Configuration (contains secrets)
 .mcp.json
-.claude/
+
+# Claude Code settings (except agents/)
+.claude/*
+!.claude/agents/
 
 # Playwright test artifacts
 .playwright-mcp/
