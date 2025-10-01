@@ -50,30 +50,35 @@ git push -u origin <ブランチ名>
 - タイトル: 簡潔な変更内容
 - 本文: 概要、変更内容、テスト手順を記載
 
-### 4. Codexレビュー依頼（必須）
+### 4. レビュー依頼（必須）
 ⚠️ **重要**: PR作成直後に必ず実施
 
-```
-@codex review
+**推奨方法：Task tool（general-purposeサブエージェント）**
+
+```typescript
+Task tool を使用:
+- subagent_type: "general-purpose"
+- prompt: "Please review PR#{番号} in repository {owner}/{repo}.
+           Check all files and verify that all issues are resolved.
+           Return either 'All issues resolved, ready to merge' or list remaining problems."
 ```
 
-- MCP GitHub APIの `add_issue_comment` を使用
-- Codexの指摘事項を確認し、必要に応じて修正
-- 💬 Discord通知: コメント・レビューは自動的にDiscordへ通知
+- サブエージェントが最新コミットを自動確認
+- 指摘事項を確認し、必要に応じて修正
 
 ### 5. 修正が必要な場合
-Codexからの指摘事項がある場合：
+レビューからの指摘事項がある場合：
 
 1. **指摘事項を確認**
-   - `mcp__github__get_pull_request_review_comments` でレビューコメントを取得
-   - 各指摘の優先度（P1 Badge等）を確認
+   - サブエージェントのレビュー結果を確認
+   - 各指摘の優先度を確認
 
 2. **修正を実施**
    - 指摘された箇所を修正
    - コミット・push
    ```bash
    git add .
-   git commit -m "fix: Codexレビュー指摘事項を修正
+   git commit -m "fix: レビュー指摘事項を修正
 
    - 指摘1の修正内容
    - 指摘2の修正内容
@@ -84,18 +89,15 @@ Codexからの指摘事項がある場合：
    git push
    ```
 
-3. **再度Codexレビュー依頼**
-   - PRを更新するたびに再レビューを依頼
-   ```
-   @codex review
-   ```
+3. **再度レビュー依頼**
+   - PRを更新するたびに Task tool で再レビューを依頼
    - 修正内容をコメントで報告（推奨）
 
 4. **修正完了まで繰り返し**
-   - すべての指摘が解決されるまで「修正 → push → レビュー依頼」を繰り返す
+   - すべての指摘が解決されるまで「修正 → push → Task toolレビュー依頼」を繰り返す
 
 ### 6. レビュー承認後にマージ
-Codexレビューが承認されたら：
+レビューが承認されたら：
 
 1. **PR状態を確認**
    - `mcp__github__get_pull_request` でPR状態を確認
