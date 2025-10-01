@@ -59,38 +59,7 @@ Content-Type: application/json
 ```json
 {
   "access_token": "eyJhbGc...",
-  "refresh_token": "eyJhbGc...",
-  "token_type": "bearer",
-  "expires_in": 3600
-}
-```
-
-#### POST /api/auth/refresh
-トークンリフレッシュ
-
-**リクエスト**
-```json
-{
-  "refresh_token": "eyJhbGc..."
-}
-```
-
-**レスポンス (200 OK)**
-```json
-{
-  "access_token": "eyJhbGc...",
-  "token_type": "bearer",
-  "expires_in": 3600
-}
-```
-
-#### POST /api/auth/logout
-ログアウト
-
-**レスポンス (200 OK)**
-```json
-{
-  "message": "Successfully logged out"
+  "token_type": "bearer"
 }
 ```
 

@@ -10,8 +10,9 @@ git clone https://github.com/ShigaRyunosuke10/nissei.git
 cd nissei
 
 # 環境変数の設定
-cp .env.example .env
-# .envを編集して必要な値を設定
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+# 各.envを編集して必要な値を設定
 
 # Docker Composeで起動
 docker-compose up -d
