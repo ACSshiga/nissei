@@ -1,82 +1,20 @@
 # コードレビューガイドライン
 
+このドキュメントでは、コードレビューの観点とチェックリストを提供します。
+
+**レビュープロセスの詳細**: [PR_MERGE_PROCESS.md](./PR_MERGE_PROCESS.md) を参照してください。
+
+---
+
 ## レビューの実施（必須）
 
 ### タイミング
 ⚠️ **PR作成直後に必ず実施**
 
-### 推奨方法：Task tool（general-purposeサブエージェント）
+### レビュー方法
+詳細は [PR_MERGE_PROCESS.md](./PR_MERGE_PROCESS.md) の「Codex MCP によるレビュー」セクションを参照してください。
 
-Claude Code内蔵のサブエージェントを使用してレビューを実施します。
-
-#### 手順
-
-1. **PR作成**
-   - GitHub PRを作成（MCP GitHub API使用）
-
-2. **Task toolでレビュー依頼**
-   ```typescript
-   Task tool を使用:
-   - subagent_type: "general-purpose"
-   - prompt: "Please review PR#{番号} in repository {owner}/{repo}.
-              Check all files and verify that all issues are resolved.
-              Return either 'All issues resolved, ready to merge' or list remaining problems."
-   ```
-
-3. **レビュー結果の確認**
-   - サブエージェントが最新コミットを自動確認
-   - 修正済み項目・未解決項目をレポート
-   - 「All issues resolved, ready to merge」ならマージ可能
-
-4. **修正対応（指摘がある場合）**
-   - 指摘された箇所を修正
-   - コミット・プッシュ
-   ```bash
-   git add .
-   git commit -m "fix: レビュー指摘事項を修正
-
-   - 指摘1の修正内容
-   - 指摘2の修正内容
-
-   🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-   Co-Authored-By: Claude <noreply@anthropic.com>"
-   git push
-   ```
-
-5. **再レビュー依頼（PR更新時）**
-   - 修正後、再度Task toolでレビュー依頼
-   - すべての指摘が解決されるまで繰り返す
-
-6. **レビュー承認後のマージ**
-
-   #### マージ前の確認
-   ```bash
-   # PR状態を確認
-   mcp__github__get_pull_request
-
-   # 確認項目:
-   # - mergeable: true
-   # - Codexレビューが承認済み
-   # - すべての指摘事項が解決済み
-   ```
-
-   #### mainブランチへマージ
-   ```bash
-   # MCP GitHub APIを使用
-   mcp__github__merge_pull_request
-   ```
-   - merge_method: `squash`（推奨）または `merge`
-   - コミットメッセージを確認
-
-   #### クリーンアップ（任意）
-   ```bash
-   # ローカルブランチ削除
-   git branch -d <ブランチ名>
-
-   # リモートブランチ削除
-   git push origin --delete <ブランチ名>
-   ```
+---
 
 ## レビュー観点
 
@@ -85,37 +23,48 @@ Claude Code内蔵のサブエージェントを使用してレビューを実施
 - [ ] 機密情報がハードコードされていない
 - [ ] 入力値の検証が行われている
 - [ ] SQLインジェクション対策がされている
+- [ ] XSS（クロスサイトスクリプティング）対策がされている
+- [ ] CSRF対策がされている（APIトークン認証の場合）
 
 ### パフォーマンス
 - [ ] N+1クエリが発生していない
 - [ ] 不要なデータ取得をしていない
 - [ ] キャッシュが適切に利用されている
 - [ ] 大量データ処理でメモリリークがない
+- [ ] データベースインデックスが適切に設定されている
 
 ### コード品質
-- [ ] 命名規則に準拠している
+- [ ] [命名規則](./NAMING_CONVENTIONS.md) に準拠している
 - [ ] 適切な関数・クラス分割がされている
 - [ ] 重複コードがない（DRY原則）
 - [ ] 適切なエラーハンドリングがされている
 - [ ] コメントが必要な箇所に記載されている
+- [ ] マジックナンバーが定数化されている
+- [ ] 複雑な条件式が分かりやすく記述されている
 
 ### テスト
-- [ ] E2Eテストが実装されている
+- [ ] [E2Eテスト](./TESTING.md) が実装されている
 - [ ] 正常系・異常系のテストがある
 - [ ] エッジケースが考慮されている
+- [ ] テストカバレッジが十分である
+- [ ] テストが独立している（実行順序に依存しない）
 
 ### ドキュメント
 - [ ] README/ドキュメントが更新されている
 - [ ] APIドキュメントが更新されている（API変更時）
 - [ ] 複雑なロジックにコメントがある
+- [ ] 環境変数の追加時に `.env.example` が更新されている
+- [ ] データベーススキーマ変更時にマイグレーション手順が文書化されている
+
+---
 
 ## レビューコメントの対応
 
 ### 優先度の判断
 
-- **Critical（必須対応）**: セキュリティ、バグ、データ破損のリスク
-- **Important（推奨対応）**: パフォーマンス、保守性の大幅改善
-- **Nice to have（検討）**: より良い実装方法の提案
+- **Critical（必須対応）** 🔴: セキュリティ、バグ、データ破損のリスク
+- **Major（推奨対応）** 🟠: パフォーマンス、保守性の大幅改善
+- **Minor（検討）** 🟡: より良い実装方法の提案
 
 ### 返信のガイドライン
 
@@ -139,23 +88,28 @@ Claude Code内蔵のサブエージェントを使用してレビューを実施
    [具体的な質問]
    ```
 
+---
+
 ## セルフレビュー（レビュー前）
 
 PR作成前に自分でチェック：
 
 - [ ] 変更内容を再確認
 - [ ] 不要なコメントやデバッグコードを削除
-- [ ] コンソールログを削除
+- [ ] `console.log()` や `print()` を削除
 - [ ] フォーマットが統一されている
 - [ ] 不要なファイルが含まれていない
-- [ ] .gitignoreが適切に設定されている
+- [ ] `.gitignore` が適切に設定されている
+- [ ] コミットメッセージが [COMMIT_GUIDELINES.md](./COMMIT_GUIDELINES.md) に準拠している
+
+---
 
 ## PR更新後の必須アクション
 
 ⚠️ **重要**: PRを更新（コミット・push）するたびに、必ず以下を実施：
 
 ### 1. 再レビュー依頼
-Task toolで再度レビュー依頼を実施
+Codex MCPで再度レビュー依頼を実施
 
 ### 2. 修正内容の確認
 ```markdown
@@ -169,12 +123,14 @@ Task toolで再度レビュー依頼を実施
 ```
 
 ### 3. レビュー結果を確認
-- サブエージェントが最新コミットを確認
+- Codex MCPが最新コミットを確認
 - 新たな指摘があれば再度修正
 
 ### 4. すべての指摘が解決されるまで繰り返し
-- 「修正 → push → Task toolレビュー」を繰り返す
+- 「修正 → push → Codex MCPレビュー」を繰り返す
 - すべての指摘が解決されたらマージ可能
+
+---
 
 ## レビュー後のアクション
 
@@ -187,7 +143,10 @@ Task toolで再度レビュー依頼を実施
    - `mcp__github__merge_pull_request` を使用
    - merge_method: `squash`（推奨）
 
-3. **ブランチ削除（任意）**
+3. **レビュー履歴を記録**
+   - `docs/PR_REVIEW_HISTORY.md` に記録
+
+4. **ブランチ削除（任意）**
    ```bash
    git branch -d <ブランチ名>
    git push origin --delete <ブランチ名>
@@ -196,12 +155,14 @@ Task toolで再度レビュー依頼を実施
 ### 修正が必要な場合
 1. 指摘事項を修正
 2. コミット・プッシュ
-3. **必ず** Task tool で再レビュー依頼
+3. **必ず** Codex MCP で再レビュー依頼
 
 ### 議論が必要な場合
 1. PRコメントで議論
 2. 必要に応じてチームメンバーに相談
 3. 方針決定後に修正・マージ
+
+---
 
 ## 注意事項
 
@@ -209,19 +170,14 @@ Task toolで再度レビュー依頼を実施
 - レビュー指摘を無視してマージしない
 - 重大な指摘は必ず対応してからマージ
 - 軽微な指摘でも次回以降は改善する
+- **Critical問題が存在する場合は絶対にマージしない**
 
-## サブエージェントについて
+---
 
-### Task tool（general-purpose）の特徴
+## 関連ドキュメント
 
-- **Claude Code内蔵のサブエージェント**
-- プロジェクトローカルでの定義は不要
-- 自動で最新コミットを参照
-- GitHub MCPを使ってPRファイルを取得・分析
-- 包括的なレビューレポートを生成
-
-### 利用可能なサブエージェント
-
-1. **general-purpose**: 汎用エージェント（レビュー、検索、複雑なタスク）
-2. **statusline-setup**: ステータスライン設定用
-3. **output-style-setup**: 出力スタイル設定用
+- [PR_MERGE_PROCESS.md](./PR_MERGE_PROCESS.md): PRマージプロセスの詳細
+- [PR_GUIDELINES.md](./PR_GUIDELINES.md): PR作成ガイドライン
+- [TESTING.md](./TESTING.md): テストガイドライン
+- [NAMING_CONVENTIONS.md](./NAMING_CONVENTIONS.md): 命名規則
+- [COMMIT_GUIDELINES.md](./COMMIT_GUIDELINES.md): コミットメッセージガイドライン

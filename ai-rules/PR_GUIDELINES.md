@@ -1,11 +1,17 @@
-# Pull Requestガイドライン
+# Pull Request ガイドライン
+
+このドキュメントでは、PR作成時の基本ルールとテンプレートを提供します。
+
+**PRレビューからマージまでの詳細プロセス**: [PR_MERGE_PROCESS.md](./PR_MERGE_PROCESS.md) を参照してください。
+
+---
 
 ## PR作成時の必須項目
 
 ### タイトル
 - 簡潔に変更内容を記述
-- コミットメッセージのsubjectと同じ形式
-- 例: `ユーザーダッシュボード画面を追加`
+- [コミットメッセージ](./COMMIT_GUIDELINES.md) のsubjectと同じ形式
+- 例: `feat: ユーザーダッシュボード画面を追加`
 
 ### 本文構成
 
@@ -23,99 +29,15 @@
 2. 手順2
 3. 期待される結果
 
+## スクリーンショット
+（UI変更の場合は添付）
+
 ## 関連Issue
 Closes #123
+Fixes #456
 ```
 
-## PR作成後の必須アクション
-
-### 1. レビュー依頼（必須）
-
-⚠️ **PR作成直後に必ず実施**
-
-**推奨方法：Task tool（general-purposeサブエージェント）**
-
-Claude Code内蔵のサブエージェントを使用してレビューを実施します。
-
-```typescript
-Task tool を使用:
-- subagent_type: "general-purpose"
-- prompt: "Please review PR#{番号} in repository {owner}/{repo}.
-           Check all files and verify that all issues are resolved.
-           Return either 'All issues resolved, ready to merge' or list remaining problems."
-```
-
-**レビュー結果の確認**:
-- サブエージェントが最新コミットを自動確認
-- 修正済み項目・未解決項目をレポート
-- 「All issues resolved, ready to merge」ならマージ可能
-
-### 2. レビュー対応（修正が必要な場合）
-
-#### 修正の実施
-1. **指摘箇所を修正**
-2. **コミット・push**
-   ```bash
-   git add .
-   git commit -m "fix: レビュー指摘事項を修正
-
-   - 指摘1の修正内容
-   - 指摘2の修正内容
-
-   🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-   Co-Authored-By: Claude <noreply@anthropic.com>"
-   git push
-   ```
-
-#### 再レビュー依頼（必須）
-⚠️ **PRを更新するたびに必ず実施**
-
-- Task toolで再度レビュー依頼を実施
-- 修正内容を報告（推奨）:
-  ```markdown
-  ## ✅ レビュー指摘事項を修正しました
-
-  ### 修正内容
-  - 修正1: 具体的な内容
-  - 修正2: 具体的な内容
-
-  修正コミット: <commit-hash>
-  ```
-
-#### 修正完了まで繰り返し
-- すべての指摘が解決されるまで「修正 → push → Task toolレビュー」を繰り返す
-
-### 3. マージ（レビュー承認後）
-
-#### マージ前の確認
-```bash
-# PR状態を確認
-mcp__github__get_pull_request
-
-# 確認項目:
-# - mergeable: true
-# - レビューが承認済み
-# - すべての指摘事項が解決済み
-```
-
-#### mainブランチへマージ
-```bash
-# MCP GitHub APIを使用
-mcp__github__merge_pull_request
-```
-
-- **merge_method**: `squash`（推奨）または `merge`
-- コミットメッセージを確認
-
-#### マージ後のクリーンアップ（任意）
-```bash
-# ローカルブランチ削除
-git branch -d <ブランチ名>
-
-# リモートブランチ削除
-git push origin --delete <ブランチ名>
-```
+---
 
 ## PRの種類別テンプレート
 
@@ -142,6 +64,8 @@ git push origin --delete <ブランチ名>
 Closes #XXX
 ```
 
+---
+
 ### バグ修正
 
 ```markdown
@@ -166,6 +90,8 @@ Closes #XXX
 Fixes #XXX
 ```
 
+---
+
 ### リファクタリング
 
 ```markdown
@@ -188,14 +114,57 @@ Fixes #XXX
 なし
 ```
 
-## チェックリスト
+---
 
-PR作成前に以下を確認：
+## PR作成後の必須アクション
 
-- [ ] 専用ブランチで作業している
+⚠️ **重要**: PR作成直後に必ず実施
+
+### 1. Codex MCP レビュー依頼
+
+詳細は [PR_MERGE_PROCESS.md](./PR_MERGE_PROCESS.md) の「Codex MCP によるレビュー」セクションを参照してください。
+
+### 2. レビュー対応
+
+レビューで指摘事項があった場合は、修正して再レビュー依頼を行います。
+
+詳細は [PR_MERGE_PROCESS.md](./PR_MERGE_PROCESS.md) の「修正対応」セクションを参照してください。
+
+### 3. マージ
+
+レビューが承認されたら、mainブランチへマージします。
+
+詳細は [PR_MERGE_PROCESS.md](./PR_MERGE_PROCESS.md) の「マージ実行」セクションを参照してください。
+
+---
+
+## PR作成前のチェックリスト
+
+- [ ] 専用ブランチで作業している（`feat-`, `fix-` など）
 - [ ] 動作確認が完了している
-- [ ] E2Eテストを実施済み
-- [ ] コミットメッセージが規約に準拠
+- [ ] [E2Eテスト](./TESTING.md) を実施済み
+- [ ] コミットメッセージが [COMMIT_GUIDELINES.md](./COMMIT_GUIDELINES.md) に準拠
 - [ ] PRテンプレートに従って記載
-- [ ] 関連Issueがあればリンク
-- [ ] Task toolレビュー依頼を実施予定
+- [ ] 関連Issueがあればリンク（`Closes #XX`）
+- [ ] スクリーンショット添付（UI変更の場合）
+- [ ] `.gitignore` に機密情報が含まれていないことを確認
+
+---
+
+## 注意事項
+
+- **mainブランチへの直接コミットは絶対禁止**
+- **PR作成直後に必ずCodex MCPレビューを依頼**
+- **Critical問題が存在する場合は絶対にマージしない**
+- **レビュー指摘を無視してマージしない**
+
+---
+
+## 関連ドキュメント
+
+- [PR_MERGE_PROCESS.md](./PR_MERGE_PROCESS.md): PRマージプロセスの詳細
+- [CODE_REVIEW.md](./CODE_REVIEW.md): コードレビューチェックリスト
+- [COMMIT_GUIDELINES.md](./COMMIT_GUIDELINES.md): コミットメッセージガイドライン
+- [WORKFLOW.md](./WORKFLOW.md): 開発ワークフロー全体
+- [TESTING.md](./TESTING.md): テストガイドライン
+- [ISSUE_GUIDELINES.md](./ISSUE_GUIDELINES.md): Issue作成ガイドライン
