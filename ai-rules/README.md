@@ -15,7 +15,7 @@
    - ブランチ作成、コミット、PR作成、レビュー、マージの全工程
 
 2. **[PR_MERGE_PROCESS.md](./PR_MERGE_PROCESS.md)** - PRマージプロセス
-   - Codex MCP によるレビュー方法
+   - Claude Code サブエージェント (Task tool) によるレビュー方法
    - レビュー結果の評価基準
    - Issue作成とマージ実行の詳細手順
 
@@ -88,13 +88,13 @@
 4. [TESTING.md](./TESTING.md) に従ってE2Eテストを実施
 5. [COMMIT_GUIDELINES.md](./COMMIT_GUIDELINES.md) に従ってコミット
 6. [PR_GUIDELINES.md](./PR_GUIDELINES.md) に従ってPR作成
-7. [PR_MERGE_PROCESS.md](./PR_MERGE_PROCESS.md) に従ってCodex MCPレビューを依頼
+7. [PR_MERGE_PROCESS.md](./PR_MERGE_PROCESS.md) に従ってClaude Code サブエージェント (Task tool) レビューを依頼
 8. レビュー承認後、mainブランチへマージ
 
 ### コードレビューを実施する場合
 
 1. [CODE_REVIEW.md](./CODE_REVIEW.md) でチェック項目を確認
-2. [PR_MERGE_PROCESS.md](./PR_MERGE_PROCESS.md) に従ってCodex MCPにレビュー依頼
+2. [PR_MERGE_PROCESS.md](./PR_MERGE_PROCESS.md) に従ってClaude Code サブエージェント (Task tool) にレビュー依頼
 3. レビュー結果を評価（Critical/Major/Minor）
 4. 必要に応じて [ISSUE_GUIDELINES.md](./ISSUE_GUIDELINES.md) に従ってIssue作成
 
@@ -103,7 +103,7 @@
 1. [ISSUE_GUIDELINES.md](./ISSUE_GUIDELINES.md) に従ってIssue作成
 2. [WORKFLOW.md](./WORKFLOW.md) に従って修正用ブランチを作成
 3. 修正後、E2Eテストで動作確認
-4. PR作成してCodex MCPレビュー
+4. PR作成してClaude Code サブエージェント (Task tool) レビュー
 
 ---
 
@@ -116,7 +116,7 @@ WORKFLOW.md (全体の流れ)
     ├── PR_MERGE_PROCESS.md (レビュー・マージ)
     │   ├── CODE_REVIEW.md (レビュー観点)
     │   ├── ISSUE_GUIDELINES.md (Issue作成)
-    │   └── MCP_USAGE.md (Codex MCP使用方法)
+    │   └── MCP_USAGE.md (MCP使用方法)
     ├── TESTING.md (テスト実施)
     │   └── MCP_USAGE.md (Playwright MCP使用方法)
     └── NAMING_CONVENTIONS.md (命名規則)
@@ -135,7 +135,7 @@ WORKFLOW.md (全体の流れ)
 
 - **mainブランチへの直接作業は絶対禁止**
 - **コミット前に必ず動作確認とE2Eテストを実施**
-- **PR作成直後に必ずCodex MCPレビューを依頼**
+- **PR作成直後に必ずClaude Code サブエージェント (Task tool) レビューを依頼**
 - **Critical問題が存在する場合は絶対にマージしない**
 - **機密情報（APIキー、パスワード等）はコミットしない**
 
@@ -144,7 +144,7 @@ WORKFLOW.md (全体の流れ)
 ## 📝 更新履歴
 
 - **2025-10-01**: 全ドキュメントを整理・統合
-  - Codex MCP による実際のレビューフローに合わせて更新
+  - Claude Code サブエージェント (Task tool) による実際のレビューフローに合わせて更新
   - 重複を削除し、相互参照を明確化
   - ISSUE_GUIDELINES.md を新規作成
   - README.md（このファイル）を新規作成

@@ -4,9 +4,9 @@ MCP サーバー運用ガイド（追記用）
 開発ポート固定: Frontend 3000 / Backend 8000（変更禁止）
 .env は UPPER_SNAKE_CASE・値はクォート無し。API キー類はコミットしない（.gitignore 必須）
 
-共通：起動・接続の流れ（Claude Code / Codex CLI から利用）
+共通：起動・接続の流れ（Claude Code から利用）
 
-上記 JSON（mcpServers）をクライアント（Claude Code や Codex CLI）の設定ファイルに反映
+上記 JSON（mcpServers）をクライアント（Claude Code）の設定ファイルに反映
 
 ローカルでクライアントを再起動 → セッション開始時に各 MCP が自動起動（type: "stdio"）または HTTP 接続
 
@@ -135,6 +135,21 @@ uvx --from git+https://github.com/oraios/serena で配布される MCP。
 
 実行系のツールが含まれる場合、変更前に差分プランの提示を必須化（破壊的変更対策）
 
+---
+
+## 削除されたツール
+
+### codex（削除理由：時間がかかりすぎるため）
+
+**以前の用途**: 深掘り解析・アーキテクチャ相談
+
+**現在の代替手段**: Claude Code のサブエージェント機能（Task tool）を使用してください。
+- PRレビュー: Task toolでコードレビューを依頼
+- 複雑なタスク: Task toolで段階的に調査・実装を依頼
+- アーキテクチャ相談: 直接Claude Codeに相談
+
+---
+
 6. supabase
 
 用途（DB/認証/ストレージ連携）
@@ -154,23 +169,3 @@ Supabase プロジェクト（--project-ref=wwyrthkizkcgndyorcww）に対する�
 本番データへの影響に注意（dry-run や 確認プロンプトを挟む）
 
 秘密鍵/サービスロールキーは厳重管理（.env & .gitignore）
-
-7. codex（Codex CLI MCP）
-
-用途（深掘り解析・アーキテクチャ相談）
-
-「バグ修正が 3 回以上失敗」したケースや、システム全体設計の検討にスイッチ。
-
-ログ・依存関係・構成の原因追跡や設計代替案の比較が得意。
-
-代表プロンプト
-
-「fix-login-timeout の修正が 3 回失敗。発生条件・再現手順・関連コミットを時系列で洗い出して原因仮説を 3 つ提示、検証手順もセットで」
-
-「SPA + FastAPI + Supabase の認可設計を比較（Cookie vs Token 方式）。トレードオフ表と推奨案を出して」
-
-「フロント 3000/バック 8000 の E2E ボトルネックを特定し、測定スクリプトを提案 → 実行」
-
-注意
-
-“参謀役” として使う。設計 → 根拠 → 代替案の順で要求すると良い

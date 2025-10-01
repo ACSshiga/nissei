@@ -104,13 +104,11 @@ Closes #XX
 
 **PRテンプレートの詳細**: [PR_GUIDELINES.md](./PR_GUIDELINES.md)
 
-### 4. Codex MCP レビュー依頼（必須）
+### 4. Claude Code サブエージェント (Task tool) レビュー依頼（必須）
 
 ⚠️ **重要**: PR作成直後に必ず実施
 
-```bash
-mcp__codex__codex を使用してレビュー依頼
-```
+Task toolを使用してレビュー依頼を行います。
 
 **レビュープロセスの詳細**: [PR_MERGE_PROCESS.md](./PR_MERGE_PROCESS.md)
 
@@ -138,11 +136,11 @@ mcp__codex__codex を使用してレビュー依頼
    ```
 
 3. **再レビュー依頼**
-   - PR更新後、再度Codex MCPにレビュー依頼
+   - PR更新後、再度Claude Code サブエージェント (Task tool) にレビュー依頼
    - 修正内容をPRコメントで報告（推奨）
 
 4. **修正完了まで繰り返し**
-   - すべてのCritical/Major問題が解決されるまで「修正 → push → Codex MCPレビュー」を繰り返す
+   - すべてのCritical/Major問題が解決されるまで「修正 → push → Claude Code サブエージェント (Task tool) レビュー」を繰り返す
 
 ### 6. マージ（レビュー承認後）
 
@@ -216,7 +214,7 @@ git checkout -b docs-update-<内容>
 
 # 3. ドキュメントを更新
 # 4. コミット・push・PR作成
-# 5. Codex MCP レビュー → マージ（通常フロー）
+# 5. Claude Code サブエージェント (Task tool) レビュー → マージ（通常フロー）
 ```
 
 ---
@@ -238,7 +236,7 @@ git checkout -b docs-update-<内容>
     ↓
 [PR作成] (PR_GUIDELINES.md準拠)
     ↓
-[Codex MCPレビュー依頼] ← 必須
+[Claude Code サブエージェント (Task tool) レビュー依頼] ← 必須
     ↓
 [レビュー結果確認]
     ├─[マージ可] → [マージ] → [docs/ 更新確認] ← 必須
@@ -271,7 +269,7 @@ git checkout -b docs-update-<内容>
 
 - ⚠️ **mainブランチへの直接作業は絶対禁止**
 - ⚠️ **コミット前に必ず動作確認とE2Eテストを実施**
-- ⚠️ **PR作成直後に必ずCodex MCPレビューを依頼**
+- ⚠️ **PR作成直後に必ずClaude Code サブエージェント (Task tool) レビューを依頼**
 - ⚠️ **Critical問題が存在する場合は絶対にマージしない**
 - ⚠️ **PR作成→レビュー→マージまでを1セットの作業として完了させる**（PRを溜めない）
 - ⚠️ **マージ後は必ず docs/ の更新が必要か確認する**

@@ -3,7 +3,7 @@
 このドキュメントでは、PRのレビューからマージまでの標準プロセスを定義します。
 
 **最終更新**: 2025-10-01
-**更新理由**: Codex CLI MCP による実際のレビューフローに合わせて全面改訂
+**更新理由**: Claude Code サブエージェント (Task tool) による実際のレビューフローに合わせて全面改訂
 
 ---
 
@@ -23,15 +23,17 @@
 
 **参考**: [PR_GUIDELINES.md](./PR_GUIDELINES.md)
 
-### 2. Codex MCP によるレビュー
+### 2. Claude Code サブエージェント (Task tool) によるレビュー
 
-PRが作成されたら、**Codex CLI (MCP)** を使用してレビューを依頼します。
+PRが作成されたら、**Claude Code サブエージェント (Task tool)** を使用してレビューを依頼します。
 
 #### レビュー依頼方法
 
+Task toolを使用して以下のプロンプトで依頼します:
+
 ```
-mcp__codex__codex を使用:
-- prompt: "あなたはコードレビュアーです。以下のPRを詳細にレビューしてください。
+Task tool に以下の内容で依頼:
+"あなたはコードレビュアーです。以下のPRを詳細にレビューしてください。
 
 # PR情報
 - タイトル: [タイトル]
@@ -73,7 +75,7 @@ mcp__codex__codex を使用:
 
 ### 3. レビュー結果の評価
 
-Codexからのレビュー結果を以下の基準で評価します：
+Claude Code サブエージェント (Task tool) からのレビュー結果を以下の基準で評価します：
 
 #### マージ可
 
@@ -113,7 +115,7 @@ Codexからのレビュー結果を以下の基準で評価します：
    ```
 
 3. **再レビュー依頼**
-   - PR更新後、再度Codex MCPにレビュー依頼
+   - PR更新後、再度Claude Code サブエージェント (Task tool) にレビュー依頼
    - すべてのCritical/Major問題が解決されるまで繰り返す
 
 ### 5. GitHub Issue作成（必要に応じて）
@@ -161,7 +163,7 @@ mcp__github__merge_pull_request
 - 変更点2
 - 変更点3
 
-レビュー実施済み（Codex MCP）: <マージ判定>
+レビュー実施済み（Claude Code サブエージェント）: <マージ判定>
 - セキュリティ: <評価>
 - 今後の改善点: Issue #XX, #YY で管理予定
 "
@@ -199,7 +201,7 @@ git checkout -b docs-update-<内容>
 
 # 3. ドキュメントを更新
 # 4. コミット・push・PR作成
-# 5. Codex MCP レビュー → マージ（通常フロー）
+# 5. Claude Code サブエージェント (Task tool) レビュー → マージ（通常フロー）
 ```
 
 ### 8. レビュー履歴の記録
@@ -212,7 +214,7 @@ git checkout -b docs-update-<内容>
 ## PR #XX: [タイトル]
 
 **マージ日時**: 2025-10-01
-**レビュアー**: Codex CLI (サブエージェント)
+**レビュアー**: Claude Code サブエージェント (Task tool)
 **判定**: [マージ可/マージ不可]
 
 ### 変更内容
@@ -261,7 +263,7 @@ git checkout -b docs-update-<内容>
 ### PR #22: 管理者パネルと工数入力の改善
 
 1. **PR作成**: feat-admin-panel-and-worklog-improvements → main
-2. **Codex MCPレビュー**: マージ可（条件付き）
+2. **Claude Code サブエージェント (Task tool) レビュー**: マージ可（条件付き）
    - Major問題3件（JWT改ざん対策、URL推測、エラーハンドリング）
    - Minor問題5件
 3. **評価**: バックエンドで適切に保護されており、実害は限定的と判断
@@ -272,7 +274,7 @@ git checkout -b docs-update-<内容>
 ### PR #21, #20: マージ不可（Critical問題あり）
 
 1. **PR作成**: 工数入力機能の改修
-2. **Codex MCPレビュー**: マージ不可
+2. **Claude Code サブエージェント (Task tool) レビュー**: マージ不可
    - **Critical問題**: データベーススキーマ不一致によるデータ損失
 3. **Issue作成**: Issue #23, #24 を作成
 4. **対応**: Issue修正後に再レビュー → マージ

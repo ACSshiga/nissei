@@ -120,9 +120,9 @@ Fixes #XXX
 
 ⚠️ **重要**: PR作成直後に必ず実施
 
-### 1. Codex MCP レビュー依頼
+### 1. Claude Code サブエージェント (Task tool) レビュー依頼
 
-詳細は [PR_MERGE_PROCESS.md](./PR_MERGE_PROCESS.md) の「Codex MCP によるレビュー」セクションを参照してください。
+詳細は [PR_MERGE_PROCESS.md](./PR_MERGE_PROCESS.md) の「Claude Code サブエージェント (Task tool) によるレビュー」セクションを参照してください。
 
 ### 2. レビュー対応
 
@@ -154,7 +154,7 @@ Fixes #XXX
 ## 注意事項
 
 - **mainブランチへの直接コミットは絶対禁止**
-- **PR作成直後に必ずCodex MCPレビューを依頼**
+- **PR作成直後に必ずClaude Code サブエージェント (Task tool) レビューを依頼**
 - **Critical問題が存在する場合は絶対にマージしない**
 - **レビュー指摘を無視してマージしない**
 
