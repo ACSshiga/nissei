@@ -41,10 +41,11 @@ issue 作成時は必ず確認して必ずこの内容に従って issue 作成�
   1. 作業内容をコミット
   2. リモートブランチに push (`git push -u origin <ブランチ名>`)
   3. PR 作成 (MCP で PR 作成)
-  4. **mainブランチへのマージ前には必ずCodexレビューを実施**
-     - PRに `@codex review` とコメントしてCodexのレビューを依頼
+  4. **PR作成後は必ず `@codex review` コメントを投稿してCodexレビューを依頼**
+     - ⚠️ **重要**: PR作成直後に必ず `@codex review` とコメントを投稿すること
+     - MCP GitHub APIの `add_issue_comment` を使用してコメント投稿
      - Codexの指摘事項を確認し、必要に応じて修正
-     - レビュー完了後にマージを実施
+     - レビュー完了後にmainブランチへマージを実施
      - 💬 **Discord通知**: PRコメント・レビューは自動的にDiscordへ通知されます
   - @ai-rules/COMMIT_AND_PR_GUIDELINES.md にガイドラインを記述しています。上記の作業時には必ず確認して必ず内容に従って作業を行ってください。
 
