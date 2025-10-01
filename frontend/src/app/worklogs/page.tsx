@@ -285,12 +285,19 @@ export default function WorklogsPage() {
                       {worklog.work_content || '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <button
-                        onClick={() => handleDelete(worklog.id)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        削除
-                      </button>
+                      <div className="flex gap-3">
+                        <Link href={`/worklogs/${worklog.id}/edit`}>
+                          <button className="text-blue-600 hover:text-blue-900">
+                            編集
+                          </button>
+                        </Link>
+                        <button
+                          onClick={() => handleDelete(worklog.id)}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          削除
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
-import { api, Project } from '@/lib/api';
+import { api, Project, WorkLogSummary } from '@/lib/api';
 import { authStorage } from '@/lib/auth';
 
 export default function ProjectDetailPage() {
@@ -12,6 +12,7 @@ export default function ProjectDetailPage() {
   const projectId = params.id as string;
 
   const [project, setProject] = useState<Project | null>(null);
+  const [worklogSummary, setWorklogSummary] = useState<WorkLogSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
 
@@ -27,8 +28,12 @@ export default function ProjectDetailPage() {
     }
 
     try {
-      const data = await api.projects.get(token, projectId);
-      setProject(data);
+      const [projectData, summaryData] = await Promise.all([
+        api.projects.get(token, projectId),
+        api.worklogs.getSummary(token, projectId).catch(() => null),
+      ]);
+      setProject(projectData);
+      setWorklogSummary(summaryData);
     } catch (error) {
       console.error('案件の取得に失敗:', error);
       alert('案件の取得に失敗しました');
@@ -220,6 +225,126 @@ export default function ProjectDetailPage() {
             </div>
           </div>
         </div>
+
+        {/* 工数集計セクション */}
+        {worklogSummary && (
+          <div className="mt-8 bg-white p-6 rounded-lg shadow">
+            <h2 className="text-xl font-semibold mb-6">工数集計</h2>
+
+            {/* 全体サマリー */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <div className="text-sm text-gray-600 mb-1">予定工数</div>
+                <div className="text-2xl font-bold text-blue-600">
+                  {formatMinutesToHours(worklogSummary.estimated_hours)}
+                </div>
+              </div>
+              <div className="bg-green-50 p-4 rounded-lg">
+                <div className="text-sm text-gray-600 mb-1">実績工数</div>
+                <div className="text-2xl font-bold text-green-600">
+                  {formatMinutesToHours(worklogSummary.actual_hours)}
+                </div>
+              </div>
+              <div className="bg-purple-50 p-4 rounded-lg">
+                <div className="text-sm text-gray-600 mb-1">差分</div>
+                <div className={`text-2xl font-bold ${
+                  worklogSummary.actual_hours > worklogSummary.estimated_hours
+                    ? 'text-red-600'
+                    : 'text-purple-600'
+                }`}>
+                  {formatMinutesToHours(worklogSummary.actual_hours - worklogSummary.estimated_hours)}
+                </div>
+              </div>
+            </div>
+
+            {/* ユーザー別集計 */}
+            {worklogSummary.by_user && worklogSummary.by_user.length > 0 && (
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold mb-4">担当者別工数</h3>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          担当者
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          合計工数
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          入力回数
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {worklogSummary.by_user.map((user, index) => (
+                        <tr key={index} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {user.username}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {formatMinutesToHours(user.total_minutes)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {user.entry_count}回
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* 日別集計 */}
+            {worklogSummary.by_date && worklogSummary.by_date.length > 0 && (
+              <div>
+                <h3 className="text-lg font-semibold mb-4">日別工数</h3>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          作業日
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          合計工数
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          入力回数
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {worklogSummary.by_date.map((day, index) => (
+                        <tr key={index} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {day.work_date}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {formatMinutesToHours(day.total_minutes)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {day.entry_count}回
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* 工数入力へのリンク */}
+            <div className="mt-6 text-center">
+              <Link href="/worklogs">
+                <button className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md">
+                  工数入力ページへ
+                </button>
+              </Link>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

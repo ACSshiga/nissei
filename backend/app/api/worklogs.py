@@ -32,11 +32,19 @@ def create_worklog(
     project = project_response.data[0]
 
     # 新規工数入力作成
+    # データベースに存在するカラムのみを送信
+    worklog_dict = worklog_data.model_dump(mode="json")
     new_worklog = {
         "id": str(uuid.uuid4()),
-        **worklog_data.model_dump(mode="json"),
+        "project_id": worklog_dict["project_id"],
+        "work_date": worklog_dict["work_date"],
+        "duration_minutes": worklog_dict["duration_minutes"],
         "user_id": current_user["id"],
     }
+    # オプションフィールドは後でカラムを追加後に有効化
+    # "start_time": worklog_dict.get("start_time"),
+    # "end_time": worklog_dict.get("end_time"),
+    # "work_content": worklog_dict.get("work_content"),
 
     worklog_response = db.table("worklogs").insert(new_worklog).execute()
 
@@ -126,8 +134,23 @@ def update_worklog(
     worklog = worklog_response.data[0]
     old_duration = worklog["duration_minutes"]
 
-    # 更新データ
-    update_data = worklog_data.model_dump(exclude_unset=True, mode="json")
+    # 更新データ（データベースに存在するカラムのみ）
+    worklog_dict = worklog_data.model_dump(exclude_unset=True, mode="json")
+    update_data = {}
+    if "project_id" in worklog_dict:
+        update_data["project_id"] = worklog_dict["project_id"]
+    if "work_date" in worklog_dict:
+        update_data["work_date"] = worklog_dict["work_date"]
+    if "duration_minutes" in worklog_dict:
+        update_data["duration_minutes"] = worklog_dict["duration_minutes"]
+    # オプションフィールドは後でカラムを追加後に有効化
+    # if "start_time" in worklog_dict:
+    #     update_data["start_time"] = worklog_dict["start_time"]
+    # if "end_time" in worklog_dict:
+    #     update_data["end_time"] = worklog_dict["end_time"]
+    # if "work_content" in worklog_dict:
+    #     update_data["work_content"] = worklog_dict["work_content"]
+
     new_duration = update_data.get("duration_minutes", old_duration)
 
     # 作業時間が変更される場合、案件の実績工数を調整
