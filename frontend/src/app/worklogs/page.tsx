@@ -71,15 +71,33 @@ export default function WorklogsPage() {
     if (!token) return;
 
     try {
-      await api.worklogs.create(token, {
-        project_id: row.project_id,
-        work_date: row.work_date,
-        start_time: row.start_time || undefined,
-        end_time: row.end_time || undefined,
-        duration_minutes: row.duration_minutes,
-        work_content: row.work_content || undefined,
-      });
-      alert('工数を保存しました');
+      const isEditing = editingRow && row.id === editingRow;
+
+      if (isEditing) {
+        // 編集モード: update APIを呼び出し
+        await api.worklogs.update(token, row.id, {
+          project_id: row.project_id,
+          work_date: row.work_date,
+          start_time: row.start_time || undefined,
+          end_time: row.end_time || undefined,
+          duration_minutes: row.duration_minutes,
+          work_content: row.work_content || undefined,
+        });
+        alert('工数を更新しました');
+        setEditingRow(null);
+      } else {
+        // 新規作成モード: create APIを呼び出し
+        await api.worklogs.create(token, {
+          project_id: row.project_id,
+          work_date: row.work_date,
+          start_time: row.start_time || undefined,
+          end_time: row.end_time || undefined,
+          duration_minutes: row.duration_minutes,
+          work_content: row.work_content || undefined,
+        });
+        alert('工数を保存しました');
+      }
+
       await loadData();
 
       // 新しい空行を追加
@@ -98,6 +116,21 @@ export default function WorklogsPage() {
       console.error('工数の保存に失敗:', error);
       alert('工数の保存に失敗しました');
     }
+  };
+
+  const handleEditWorklog = (worklog: WorkLog) => {
+    setEditingRow(worklog.id);
+    // 編集モードに切り替え、既存データを編集用の行データとして設定
+    setRows([{
+      id: worklog.id,
+      project_id: worklog.project_id,
+      work_date: worklog.work_date,
+      start_time: worklog.start_time || '',
+      end_time: worklog.end_time || '',
+      duration_minutes: worklog.duration_minutes,
+      work_content: worklog.work_content || '',
+    }]);
+    setActiveTab('input');
   };
 
   const handleDeleteWorklog = async (worklogId: string) => {
@@ -363,12 +396,20 @@ export default function WorklogsPage() {
                               <td className="border border-gray-300 px-4 py-3 text-sm text-right">{formatMinutesToHours(worklog.duration_minutes)}</td>
                               <td className="border border-gray-300 px-4 py-3 text-sm">{worklog.work_content || '-'}</td>
                               <td className="border border-gray-300 px-4 py-3 text-center">
-                                <button
-                                  onClick={() => handleDeleteWorklog(worklog.id)}
-                                  className="px-3 py-1 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded"
-                                >
-                                  削除
-                                </button>
+                                <div className="flex gap-2 justify-center">
+                                  <button
+                                    onClick={() => handleEditWorklog(worklog)}
+                                    className="px-3 py-1 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded"
+                                  >
+                                    編集
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteWorklog(worklog.id)}
+                                    className="px-3 py-1 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded"
+                                  >
+                                    削除
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           ))}
