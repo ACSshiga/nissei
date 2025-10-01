@@ -12,7 +12,10 @@ permissions:
 
 jobs:
   comment-codex:
-    if: ${{ !github.event.pull_request.draft }}  # draftは除外（ready_for_reviewで拾う）
+    # 同一リポジトリPRのみ対象（フォークPRはcodex-autocomment-forks.ymlで処理）
+    if: >
+      github.event.pull_request.head.repo.fork == false
+      && !github.event.pull_request.draft
     runs-on: ubuntu-latest
     steps:
       - name: Post "@codex review" comment
