@@ -12,7 +12,7 @@
 ⚠️ **PR作成直後に必ず実施**
 
 ### レビュー方法
-詳細は [PR_MERGE_PROCESS.md](./PR_MERGE_PROCESS.md) の「Claude Code サブエージェント (Task tool) によるレビュー」セクションを参照してください。
+詳細は [PR_MERGE_PROCESS.md](./PR_MERGE_PROCESS.md) の「code-reviewer サブエージェント によるレビュー」セクションを参照してください。
 
 ---
 
@@ -109,7 +109,7 @@ PR作成前に自分でチェック：
 ⚠️ **重要**: PRを更新（コミット・push）するたびに、必ず以下を実施：
 
 ### 1. 再レビュー依頼
-Claude Code サブエージェント (Task tool) で再度レビュー依頼を実施
+code-reviewer サブエージェント で再度レビュー依頼を実施
 
 ### 2. 修正内容の確認
 ```markdown
@@ -123,11 +123,11 @@ Claude Code サブエージェント (Task tool) で再度レビュー依頼を�
 ```
 
 ### 3. レビュー結果を確認
-- Claude Code サブエージェント (Task tool) が最新コミットを確認
+- code-reviewer サブエージェント が最新コミットを確認
 - 新たな指摘があれば再度修正
 
 ### 4. すべての指摘が解決されるまで繰り返し
-- 「修正 → push → Claude Code サブエージェント (Task tool) レビュー」を繰り返す
+- 「修正 → push → code-reviewer サブエージェント レビュー」を繰り返す
 - すべての指摘が解決されたらマージ可能
 
 ---
@@ -155,7 +155,7 @@ Claude Code サブエージェント (Task tool) で再度レビュー依頼を�
 ### 修正が必要な場合
 1. 指摘事項を修正
 2. コミット・プッシュ
-3. **必ず** Claude Code サブエージェント (Task tool) で再レビュー依頼
+3. **必ず** code-reviewer サブエージェント で再レビュー依頼
 
 ### 議論が必要な場合
 1. PRコメントで議論
