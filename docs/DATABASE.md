@@ -13,7 +13,9 @@ users
 ├── id (PK)
 ├── email
 ├── username
-└── password_hash
+├── password_hash
+├── is_active
+└── is_admin
 
 projects
 ├── id (PK)
@@ -79,6 +81,7 @@ work_types (マスタ)
 | username | VARCHAR(100) | NO | - | ユーザー名 |
 | password_hash | VARCHAR(255) | NO | - | ハッシュ化パスワード |
 | is_active | BOOLEAN | NO | true | アクティブフラグ |
+| is_admin | BOOLEAN | NO | false | 管理者フラグ |
 | created_at | TIMESTAMP | NO | CURRENT_TIMESTAMP | 作成日時 |
 | updated_at | TIMESTAMP | NO | CURRENT_TIMESTAMP | 更新日時 |
 
