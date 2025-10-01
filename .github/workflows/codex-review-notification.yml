@@ -49,12 +49,16 @@ jobs:
             COMMENT_PREVIEW="${COMMENT_PREVIEW}..."
           fi
 
+          # JSON用にコメントをエスケープ
+          COMMENT_PREVIEW_ESCAPED=$(echo "$COMMENT_PREVIEW" | jq -Rs .)
+          PR_TITLE_ESCAPED=$(echo "$PR_TITLE" | jq -Rs .)
+
           # Discordに通知を送信
           curl -H "Content-Type: application/json" \
             -d "{
               \"embeds\": [{
                 \"title\": \"🤖 Codex Review on PR #${PR_NUMBER}\",
-                \"description\": \"**${PR_TITLE}**\",
+                \"description\": ${PR_TITLE_ESCAPED},
                 \"color\": 3447003,
                 \"fields\": [
                   {
@@ -69,7 +73,7 @@ jobs:
                   },
                   {
                     \"name\": \"Comment Preview\",
-                    \"value\": \"${COMMENT_PREVIEW}\"
+                    \"value\": ${COMMENT_PREVIEW_ESCAPED}
                   }
                 ],
                 \"url\": \"${COMMENT_URL}\",
