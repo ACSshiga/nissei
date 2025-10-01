@@ -35,7 +35,7 @@
 1. 変更をコミット（[コミット規約](./ai-rules/COMMIT_GUIDELINES.md)に従う）
 2. リモートブランチにpush
 3. PRを作成（[PR規約](./ai-rules/PR_GUIDELINES.md)に従う）
-4. **必須**: Task tool（general-purposeサブエージェント）でレビューを依頼
+4. **必須**: Codex MCP でレビューを依頼（[PRマージプロセス](./ai-rules/PR_MERGE_PROCESS.md)参照）
 5. レビュー完了後にmainへマージ
 
 ## コミット前の必須確認
@@ -73,18 +73,22 @@ User ID: 00000000-0000-4000-8000-000000000000
 
 ## コードレビュー
 
-詳細は [ai-rules/CODE_REVIEW.md](./ai-rules/CODE_REVIEW.md) を参照。
+詳細は [ai-rules/PR_MERGE_PROCESS.md](./ai-rules/PR_MERGE_PROCESS.md) を参照。
 
 ### レビュー方法（必須）
-1. PR作成直後に Task tool（general-purposeサブエージェント）でレビュー依頼
-2. サブエージェントが最新コミットを自動確認
-3. 指摘事項を確認し、必要に応じて修正
+1. PR作成直後に **Codex MCP** でレビュー依頼
+2. レビュー結果を評価（Critical/Major/Minor）
+3. 指摘事項を確認し、必要に応じて修正・Issue化
+4. レビュー承認後にmainへマージ
+
+参考: [CODE_REVIEW.md](./ai-rules/CODE_REVIEW.md)（レビュー観点チェックリスト）
 
 ## MCPサーバー
 
 詳細は [ai-rules/MCP_USAGE.md](./ai-rules/MCP_USAGE.md) を参照。
 
 ### 利用可能なMCP
+- **codex**: PRレビュー・深掘り解析・アーキテクチャ相談（最重要）
 - **context7**: RAG/検索支援
 - **playwright**: E2Eテスト自動化
 - **github**: Issue/PR操作
@@ -117,19 +121,23 @@ nissei/
 ├── CLAUDE.md              # このファイル（AI用設定）
 ├── README.md              # プロジェクト概要（人間用）
 ├── ai-rules/              # AI用汎用ルール
-│   ├── WORKFLOW.md
-│   ├── COMMIT_GUIDELINES.md
-│   ├── PR_GUIDELINES.md
-│   ├── NAMING_CONVENTIONS.md
-│   ├── CODE_REVIEW.md
-│   ├── TESTING.md
-│   ├── NOTIFICATION_SETUP.md
-│   └── MCP_USAGE.md
+│   ├── README.md          # ドキュメント構成の説明
+│   ├── WORKFLOW.md        # 開発ワークフロー全体
+│   ├── PR_MERGE_PROCESS.md # PRレビュー・マージプロセス
+│   ├── PR_GUIDELINES.md   # PR作成ガイドライン
+│   ├── CODE_REVIEW.md     # コードレビューチェックリスト
+│   ├── COMMIT_GUIDELINES.md # コミットメッセージガイドライン
+│   ├── ISSUE_GUIDELINES.md # Issue作成ガイドライン
+│   ├── TESTING.md         # テストガイドライン
+│   ├── NAMING_CONVENTIONS.md # 命名規則
+│   └── MCP_USAGE.md       # MCP サーバー運用ガイド
 ├── docs/                  # プロジェクト固有情報
+│   ├── PR_REVIEW_HISTORY.md # PRレビュー履歴
 │   ├── SETUP.md
 │   ├── ARCHITECTURE.md
 │   ├── API.md
-│   └── DATABASE.md
+│   ├── DATABASE.md
+│   └── requirements-definition.md
 ├── frontend/              # Next.jsアプリ
 ├── backend/               # FastAPIアプリ
 └── docker-compose.yml
