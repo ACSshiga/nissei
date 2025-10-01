@@ -82,7 +82,7 @@ git push -u origin <ブランチ名>
 ```bash
 # MCP GitHub APIを使用
 mcp__github__create_pull_request
-  owner: "ACSshiga"
+  owner: "ShigaRyunosuke10"
   repo: "nissei"
   title: "<type>: <変更内容の要約>"
   body: "
@@ -152,7 +152,7 @@ Task toolを使用してレビュー依頼を行います。
 ```bash
 # PR状態を確認
 mcp__github__get_pull_request
-  owner: "ACSshiga"
+  owner: "ShigaRyunosuke10"
   repo: "nissei"
   pullNumber: <PR番号>
 
@@ -167,7 +167,7 @@ mcp__github__get_pull_request
 ```bash
 # MCP GitHub APIを使用
 mcp__github__merge_pull_request
-  owner: "ACSshiga"
+  owner: "ShigaRyunosuke10"
   repo: "nissei"
   pullNumber: <PR番号>
   merge_method: "squash"  # 推奨

@@ -238,7 +238,7 @@ def example_function():
 
 ```bash
 mcp__github__create_issue を使用:
-- owner: "ACSshiga"
+- owner: "ShigaRyunosuke10"
 - repo: "nissei"
 - title: "[種類] 問題の要約"
 - body: [上記テンプレートに従った内容]

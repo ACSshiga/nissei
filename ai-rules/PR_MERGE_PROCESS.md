@@ -150,7 +150,7 @@ mcp__github__create_issue を使用:
 ```bash
 # MCP GitHub APIを使用
 mcp__github__merge_pull_request
-  owner: "ACSshiga"
+  owner: "ShigaRyunosuke10"
   repo: "nissei"
   pullNumber: <PR番号>
   merge_method: "squash"  # 推奨
