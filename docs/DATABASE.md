@@ -28,9 +28,9 @@ work_logs
 ├── id (PK)
 ├── project_id (FK → projects.id)
 ├── user_id (FK → users.id)
-├── date
-├── description
-└── hours
+├── work_date
+├── duration_minutes
+└── work_content
 
 materials
 ├── id (PK)
@@ -120,17 +120,19 @@ work_types (マスタ)
 | id | UUID | NO | gen_random_uuid() | 主キー |
 | project_id | UUID | NO | - | プロジェクトID（外部キー） |
 | user_id | UUID | NO | - | ユーザーID（外部キー） |
-| date | DATE | NO | - | 作業日 |
-| description | TEXT | NO | - | 作業内容 |
-| hours | DECIMAL(5,2) | NO | 0.00 | 作業時間 |
+| work_date | DATE | NO | - | 作業日 |
+| duration_minutes | INTEGER | NO | - | 作業時間（分）※15分単位 |
+| work_content | TEXT | YES | NULL | 作業内容 |
 | created_at | TIMESTAMP | NO | CURRENT_TIMESTAMP | 作成日時 |
 | updated_at | TIMESTAMP | NO | CURRENT_TIMESTAMP | 更新日時 |
+
+> **注**: `start_time`（開始時刻）と`end_time`（終了時刻）フィールドは将来的な拡張のために設計されていますが、現在は実装されていません（Issue #23, #24参照）。
 
 **インデックス**
 - PRIMARY KEY (id)
 - INDEX (project_id)
 - INDEX (user_id)
-- INDEX (date)
+- INDEX (work_date)
 
 **外部キー**
 - project_id → projects(id) ON DELETE CASCADE

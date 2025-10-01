@@ -35,8 +35,13 @@
 1. 変更をコミット（[コミット規約](./ai-rules/COMMIT_GUIDELINES.md)に従う）
 2. リモートブランチにpush
 3. PRを作成（[PR規約](./ai-rules/PR_GUIDELINES.md)に従う）
-4. **必須**: Task tool（general-purposeサブエージェント）でレビューを依頼
+4. **必須**: Task tool (サブエージェント) でレビューを依頼（[PRマージプロセス](./ai-rules/PR_MERGE_PROCESS.md)参照）
 5. レビュー完了後にmainへマージ
+6. **必須**: マージ後に docs/ の更新が必要か確認・更新
+
+⚠️ **重要**: **PR作成→レビュー→マージまでを1セットの作業として完了させる**
+- PRが溜まると干渉したり競合の原因になるため、必ずマージまで完了させる
+- マージ後は必ず docs/ の更新が必要か確認する（詳細は [WORKFLOW.md](./ai-rules/WORKFLOW.md) 参照）
 
 ## コミット前の必須確認
 
@@ -73,12 +78,15 @@ User ID: 00000000-0000-4000-8000-000000000000
 
 ## コードレビュー
 
-詳細は [ai-rules/CODE_REVIEW.md](./ai-rules/CODE_REVIEW.md) を参照。
+詳細は [ai-rules/PR_MERGE_PROCESS.md](./ai-rules/PR_MERGE_PROCESS.md) を参照。
 
 ### レビュー方法（必須）
-1. PR作成直後に Task tool（general-purposeサブエージェント）でレビュー依頼
-2. サブエージェントが最新コミットを自動確認
-3. 指摘事項を確認し、必要に応じて修正
+1. PR作成直後に **Task tool (サブエージェント)** でレビュー依頼
+2. レビュー結果を評価（Critical/Major/Minor）
+3. 指摘事項を確認し、必要に応じて修正・Issue化
+4. レビュー承認後にmainへマージ
+
+参考: [CODE_REVIEW.md](./ai-rules/CODE_REVIEW.md)（レビュー観点チェックリスト）
 
 ## MCPサーバー
 
@@ -91,6 +99,9 @@ User ID: 00000000-0000-4000-8000-000000000000
 - **desktop-commander**: ローカルPC操作
 - **serena**: 高度な自動化
 - **supabase**: DB/認証/ストレージ連携
+
+### PRレビュー
+- **Task tool (サブエージェント)**: PRレビュー・複雑なタスクの委任（高速）
 
 ## Context7利用
 
@@ -117,19 +128,23 @@ nissei/
 ├── CLAUDE.md              # このファイル（AI用設定）
 ├── README.md              # プロジェクト概要（人間用）
 ├── ai-rules/              # AI用汎用ルール
-│   ├── WORKFLOW.md
-│   ├── COMMIT_GUIDELINES.md
-│   ├── PR_GUIDELINES.md
-│   ├── NAMING_CONVENTIONS.md
-│   ├── CODE_REVIEW.md
-│   ├── TESTING.md
-│   ├── NOTIFICATION_SETUP.md
-│   └── MCP_USAGE.md
+│   ├── README.md          # ドキュメント構成の説明
+│   ├── WORKFLOW.md        # 開発ワークフロー全体
+│   ├── PR_MERGE_PROCESS.md # PRレビュー・マージプロセス
+│   ├── PR_GUIDELINES.md   # PR作成ガイドライン
+│   ├── CODE_REVIEW.md     # コードレビューチェックリスト
+│   ├── COMMIT_GUIDELINES.md # コミットメッセージガイドライン
+│   ├── ISSUE_GUIDELINES.md # Issue作成ガイドライン
+│   ├── TESTING.md         # テストガイドライン
+│   ├── NAMING_CONVENTIONS.md # 命名規則
+│   └── MCP_USAGE.md       # MCP サーバー運用ガイド
 ├── docs/                  # プロジェクト固有情報
+│   ├── PR_REVIEW_HISTORY.md # PRレビュー履歴
 │   ├── SETUP.md
 │   ├── ARCHITECTURE.md
 │   ├── API.md
-│   └── DATABASE.md
+│   ├── DATABASE.md
+│   └── requirements-definition.md
 ├── frontend/              # Next.jsアプリ
 ├── backend/               # FastAPIアプリ
 └── docker-compose.yml
