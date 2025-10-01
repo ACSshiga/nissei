@@ -68,7 +68,6 @@ Claude Code内蔵のサブエージェントを使用してレビューを実施
    ```
    - merge_method: `squash`（推奨）または `merge`
    - コミットメッセージを確認
-   - Discord通知が自動送信される
 
    #### クリーンアップ（任意）
    ```bash

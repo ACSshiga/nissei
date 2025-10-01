@@ -80,17 +80,6 @@ User ID: 00000000-0000-4000-8000-000000000000
 2. サブエージェントが最新コミットを自動確認
 3. 指摘事項を確認し、必要に応じて修正
 
-## Discord通知
-
-詳細は [ai-rules/NOTIFICATION_SETUP.md](./ai-rules/NOTIFICATION_SETUP.md) を参照。
-
-### 通知イベント
-- PRコメント
-- PR作成・更新・マージ
-- Pull Requestレビュー
-
-通知先: Discord `#github-notifications` チャンネル
-
 ## MCPサーバー
 
 詳細は [ai-rules/MCP_USAGE.md](./ai-rules/MCP_USAGE.md) を参照。
