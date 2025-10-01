@@ -29,6 +29,11 @@ export async function apiFetch<T>(
     throw new Error(error.detail || `HTTP ${response.status}`);
   }
 
+  // 204 No Content の場合はJSONパースしない
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
   return response.json();
 }
 
