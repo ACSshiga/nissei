@@ -209,7 +209,6 @@ nissei/
 - リクエスト数
 
 ### アラート
-- Discord Webhook（GitHub連携）
 - エラー通知
 
 ## デプロイメント

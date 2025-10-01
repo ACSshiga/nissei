@@ -154,10 +154,6 @@ pytest
 
 ## 📞 サポート
 
-### Discord通知
-PRコメント・Codexレビューは自動的にDiscordへ通知されます。
-- チャンネル: `#github-notifications`
-
 ### リポジトリ
 - GitHub: [ShigaRyunosuke10/nissei](https://github.com/ShigaRyunosuke10/nissei)
 

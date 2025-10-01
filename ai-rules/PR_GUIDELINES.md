@@ -107,7 +107,6 @@ mcp__github__merge_pull_request
 
 - **merge_method**: `squash`（推奨）または `merge`
 - コミットメッセージを確認
-- Discord通知が自動送信される
 
 #### マージ後のクリーンアップ（任意）
 ```bash
