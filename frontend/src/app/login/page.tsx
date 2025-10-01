@@ -21,6 +21,14 @@ export default function LoginPage() {
     try {
       const response = await api.auth.login({ email, password });
       authStorage.setToken(response.access_token);
+
+      // JWTトークンをデコードしてユーザー情報を取得
+      const tokenParts = response.access_token.split('.');
+      if (tokenParts.length === 3) {
+        const payload = JSON.parse(atob(tokenParts[1]));
+        authStorage.setUser(payload);
+      }
+
       router.push('/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'ログインに失敗しました');

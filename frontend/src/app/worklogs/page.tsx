@@ -17,8 +17,6 @@ export default function WorklogsPage() {
   const [formData, setFormData] = useState({
     project_id: '',
     work_date: new Date().toISOString().split('T')[0],
-    start_time: '',
-    end_time: '',
     duration_minutes: 0,
     work_content: '',
   });
@@ -59,8 +57,6 @@ export default function WorklogsPage() {
       setFormData({
         project_id: '',
         work_date: new Date().toISOString().split('T')[0],
-        start_time: '',
-        end_time: '',
         duration_minutes: 0,
         work_content: '',
       });
@@ -160,40 +156,48 @@ export default function WorklogsPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    開始時刻
+                    作業時間 *
                   </label>
-                  <input
-                    type="time"
-                    value={formData.start_time}
-                    onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    終了時刻
-                  </label>
-                  <input
-                    type="time"
-                    value={formData.end_time}
-                    onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    作業時間（分） *
-                  </label>
-                  <input
-                    type="number"
+                  <select
                     required
-                    min="1"
                     value={formData.duration_minutes}
-                    onChange={(e) => setFormData({ ...formData, duration_minutes: parseInt(e.target.value) || 0 })}
+                    onChange={(e) => setFormData({ ...formData, duration_minutes: parseInt(e.target.value) })}
                     className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  />
+                  >
+                    <option value={0}>選択してください</option>
+                    <option value={15}>15分</option>
+                    <option value={30}>30分</option>
+                    <option value={45}>45分</option>
+                    <option value={60}>1時間</option>
+                    <option value={75}>1時間15分</option>
+                    <option value={90}>1時間30分</option>
+                    <option value={105}>1時間45分</option>
+                    <option value={120}>2時間</option>
+                    <option value={135}>2時間15分</option>
+                    <option value={150}>2時間30分</option>
+                    <option value={165}>2時間45分</option>
+                    <option value={180}>3時間</option>
+                    <option value={195}>3時間15分</option>
+                    <option value={210}>3時間30分</option>
+                    <option value={225}>3時間45分</option>
+                    <option value={240}>4時間</option>
+                    <option value={255}>4時間15分</option>
+                    <option value={270}>4時間30分</option>
+                    <option value={285}>4時間45分</option>
+                    <option value={300}>5時間</option>
+                    <option value={315}>5時間15分</option>
+                    <option value={330}>5時間30分</option>
+                    <option value={345}>5時間45分</option>
+                    <option value={360}>6時間</option>
+                    <option value={375}>6時間15分</option>
+                    <option value={390}>6時間30分</option>
+                    <option value={405}>6時間45分</option>
+                    <option value={420}>7時間</option>
+                    <option value={435}>7時間15分</option>
+                    <option value={450}>7時間30分</option>
+                    <option value={465}>7時間45分</option>
+                    <option value={480}>8時間</option>
+                  </select>
                 </div>
 
                 <div className="md:col-span-2">
@@ -247,12 +251,6 @@ export default function WorklogsPage() {
                     案件
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    開始時刻
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    終了時刻
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     作業時間
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -271,12 +269,6 @@ export default function WorklogsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {getProjectName(worklog.project_id)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {worklog.start_time || '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {worklog.end_time || '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {formatMinutesToHours(worklog.duration_minutes)}

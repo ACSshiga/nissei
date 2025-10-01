@@ -63,6 +63,30 @@ export default function DashboardPage() {
 
       {/* メインコンテンツ */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* 管理者パネルリンク（管理者のみ表示） */}
+        {user?.is_admin && (
+          <div className="mb-6">
+            <Link href="/admin-panel-secret">
+              <div className="bg-gradient-to-r from-orange-500 to-red-600 p-4 rounded-lg shadow hover:shadow-lg transition cursor-pointer">
+                <div className="flex items-center justify-between text-white">
+                  <div className="flex items-center gap-3">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    <div>
+                      <h3 className="text-lg font-semibold">管理者パネル</h3>
+                      <p className="text-sm text-orange-100">ユーザー管理などの管理者機能</p>
+                    </div>
+                  </div>
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </div>
+            </Link>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* 案件管理カード */}
           <Link href="/projects">
