@@ -29,35 +29,35 @@ Closes #123
 
 ## PR作成後の必須アクション
 
-### 1. Codexレビュー依頼（必須）
+### 1. レビュー依頼（必須）
 
 ⚠️ **PR作成直後に必ず実施**
 
-```
-@codex review
+**推奨方法：Task tool（general-purposeサブエージェント）**
+
+Claude Code内蔵のサブエージェントを使用してレビューを実施します。
+
+```typescript
+Task tool を使用:
+- subagent_type: "general-purpose"
+- prompt: "Please review PR#{番号} in repository {owner}/{repo}.
+           Check all files and verify that all issues are resolved.
+           Return either 'All issues resolved, ready to merge' or list remaining problems."
 ```
 
-- MCP GitHub APIの `add_issue_comment` を使用してコメント投稿
-- Codexが自動的にコードレビューを実施
-- レビュー結果はDiscordに自動通知
+**レビュー結果の確認**:
+- サブエージェントが最新コミットを自動確認
+- 修正済み項目・未解決項目をレポート
+- 「All issues resolved, ready to merge」ならマージ可能
 
 ### 2. レビュー対応（修正が必要な場合）
-
-#### 指摘事項の確認
-```bash
-# MCP GitHub APIでレビューコメントを取得
-mcp__github__get_pull_request_review_comments
-```
-
-- 各指摘の優先度を確認（P1 Badge = 重要度高）
-- すべての指摘事項をリスト化
 
 #### 修正の実施
 1. **指摘箇所を修正**
 2. **コミット・push**
    ```bash
    git add .
-   git commit -m "fix: Codexレビュー指摘事項を修正
+   git commit -m "fix: レビュー指摘事項を修正
 
    - 指摘1の修正内容
    - 指摘2の修正内容
@@ -71,14 +71,10 @@ mcp__github__get_pull_request_review_comments
 #### 再レビュー依頼（必須）
 ⚠️ **PRを更新するたびに必ず実施**
 
-```
-@codex review
-```
-
-- PRにコメントで再レビューを依頼
-- 修正内容を簡潔に報告（推奨）:
+- Task toolで再度レビュー依頼を実施
+- 修正内容を報告（推奨）:
   ```markdown
-  ## ✅ Codexレビュー指摘事項を修正しました
+  ## ✅ レビュー指摘事項を修正しました
 
   ### 修正内容
   - 修正1: 具体的な内容
@@ -88,7 +84,7 @@ mcp__github__get_pull_request_review_comments
   ```
 
 #### 修正完了まで繰り返し
-- すべての指摘が解決されるまで「修正 → push → @codex review」を繰り返す
+- すべての指摘が解決されるまで「修正 → push → Task toolレビュー」を繰り返す
 
 ### 3. マージ（レビュー承認後）
 
@@ -99,7 +95,7 @@ mcp__github__get_pull_request
 
 # 確認項目:
 # - mergeable: true
-# - Codexレビューが承認済み
+# - レビューが承認済み
 # - すべての指摘事項が解決済み
 ```
 
@@ -203,4 +199,4 @@ PR作成前に以下を確認：
 - [ ] コミットメッセージが規約に準拠
 - [ ] PRテンプレートに従って記載
 - [ ] 関連Issueがあればリンク
-- [ ] Codexレビュー依頼を投稿予定
+- [ ] Task toolレビュー依頼を実施予定
