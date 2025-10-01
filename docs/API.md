@@ -205,51 +205,202 @@ Content-Type: application/json
 
 ---
 
-### 作業履歴 (Work Logs)
+### 工数入力 (Work Logs)
 
-#### GET /api/projects/{project_id}/work-logs
-作業履歴一覧取得
+#### GET /api/worklogs
+工数入力一覧取得
+
+**クエリパラメータ**
+- `page`: ページ番号（デフォルト: 1）
+- `per_page`: 1ページあたりの件数（デフォルト: 20）
+- `project_id`: プロジェクトIDでフィルタ
+- `work_date`: 作業日でフィルタ
+- `user_id`: ユーザーIDでフィルタ
 
 **レスポンス (200 OK)**
 ```json
 {
-  "items": [
+  "worklogs": [
     {
       "id": "uuid",
       "project_id": "uuid",
-      "date": "2025-01-01",
-      "description": "作業内容",
-      "hours": 8.0,
-      "created_at": "2025-01-01T00:00:00Z"
+      "user_id": "uuid",
+      "work_date": "2025-01-01",
+      "duration_minutes": 480,
+      "work_content": "作業内容",
+      "created_at": "2025-01-01T00:00:00Z",
+      "updated_at": "2025-01-01T00:00:00Z"
     }
   ],
   "total": 50,
   "page": 1,
-  "pages": 3
+  "per_page": 20
 }
 ```
 
-#### POST /api/projects/{project_id}/work-logs
-作業履歴作成
+#### POST /api/worklogs
+工数入力作成
 
 **リクエスト**
 ```json
 {
-  "date": "2025-01-01",
-  "description": "作業内容の説明",
-  "hours": 8.0
+  "project_id": "uuid",
+  "work_date": "2025-01-01",
+  "duration_minutes": 480,
+  "work_content": "作業内容の説明"
 }
 ```
+
+**注意**:
+- `duration_minutes` は15分刻みでの入力を推奨（15, 30, 45, 60, ...）
+- 開始時刻・終了時刻は不要（duration_minutesのみで記録）
 
 **レスポンス (201 Created)**
 ```json
 {
   "id": "uuid",
   "project_id": "uuid",
-  "date": "2025-01-01",
-  "description": "作業内容の説明",
-  "hours": 8.0,
+  "user_id": "uuid",
+  "work_date": "2025-01-01",
+  "duration_minutes": 480,
+  "work_content": "作業内容の説明",
   "created_at": "2025-01-01T00:00:00Z"
+}
+```
+
+#### GET /api/worklogs/{id}
+特定の工数入力取得
+
+**レスポンス (200 OK)**
+```json
+{
+  "id": "uuid",
+  "project_id": "uuid",
+  "user_id": "uuid",
+  "work_date": "2025-01-01",
+  "duration_minutes": 480,
+  "work_content": "作業内容",
+  "created_at": "2025-01-01T00:00:00Z",
+  "updated_at": "2025-01-01T00:00:00Z"
+}
+```
+
+#### PUT /api/worklogs/{id}
+工数入力更新
+
+**リクエスト**
+```json
+{
+  "project_id": "uuid",
+  "work_date": "2025-01-02",
+  "duration_minutes": 240,
+  "work_content": "更新後の作業内容"
+}
+```
+
+**レスポンス (200 OK)**
+```json
+{
+  "id": "uuid",
+  "project_id": "uuid",
+  "user_id": "uuid",
+  "work_date": "2025-01-02",
+  "duration_minutes": 240,
+  "work_content": "更新後の作業内容",
+  "updated_at": "2025-01-02T00:00:00Z"
+}
+```
+
+#### DELETE /api/worklogs/{id}
+工数入力削除
+
+**レスポンス (204 No Content)**
+
+#### GET /api/worklogs/summary/{project_id}
+プロジェクト別工数サマリー取得
+
+**レスポンス (200 OK)**
+```json
+{
+  "project_id": "uuid",
+  "management_no": "A001",
+  "estimated_hours": 100.0,
+  "actual_hours": 75.5,
+  "by_user": [
+    {
+      "username": "user1",
+      "total_minutes": 2400,
+      "entry_count": 5
+    }
+  ],
+  "by_date": [
+    {
+      "work_date": "2025-01-01",
+      "total_minutes": 480,
+      "entry_count": 2
+    }
+  ]
+}
+```
+
+---
+
+### 管理者API (Admin)
+
+**注意**: すべての管理者APIは `is_admin=True` のユーザーのみアクセス可能
+
+#### GET /api/admin/users
+全ユーザー一覧取得
+
+**レスポンス (200 OK)**
+```json
+{
+  "users": [
+    {
+      "id": "uuid",
+      "email": "user@example.com",
+      "username": "user123",
+      "is_active": true,
+      "is_admin": false,
+      "created_at": "2025-01-01T00:00:00Z"
+    }
+  ]
+}
+```
+
+#### DELETE /api/admin/users/{user_id}
+ユーザー削除
+
+**注意**:
+- 自分自身は削除不可
+- 削除したユーザーのデータは保持される
+
+**レスポンス (200 OK)**
+```json
+{
+  "message": "ユーザー user123 を削除しました"
+}
+```
+
+#### PATCH /api/admin/users/{user_id}/activate
+ユーザーをアクティブ化
+
+**レスポンス (200 OK)**
+```json
+{
+  "message": "ユーザーをアクティブ化しました"
+}
+```
+
+#### PATCH /api/admin/users/{user_id}/deactivate
+ユーザーを非アクティブ化
+
+**注意**: 自分自身は非アクティブ化不可
+
+**レスポンス (200 OK)**
+```json
+{
+  "message": "ユーザーを非アクティブ化しました"
 }
 ```
 

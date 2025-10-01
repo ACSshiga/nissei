@@ -124,7 +124,11 @@ def login(login_data: LoginRequest, db: Client = Depends(get_db)):
     # アクセストークンを生成
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": str(user["id"]), "email": user["email"]},
+        data={
+            "sub": str(user["id"]),
+            "email": user["email"],
+            "is_admin": user.get("is_admin", False)
+        },
         expires_delta=access_token_expires
     )
 

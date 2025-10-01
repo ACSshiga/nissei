@@ -42,6 +42,8 @@ export interface User {
   id: string;
   email: string;
   username: string;
+  is_admin?: boolean;
+  is_active?: boolean;
   created_at: string;
 }
 
@@ -396,6 +398,33 @@ export const api = {
           method: 'DELETE',
           token,
         }),
+    },
+  },
+
+  // 管理者API
+  admin: {
+    listUsers: async (token: string) => {
+      return apiFetch<{ users: Array<User & { is_active: boolean; is_admin: boolean }> }>('/api/admin/users', {
+        token,
+      });
+    },
+    deleteUser: async (token: string, userId: string) => {
+      return apiFetch<{ message: string }>(`/api/admin/users/${userId}`, {
+        method: 'DELETE',
+        token,
+      });
+    },
+    activateUser: async (token: string, userId: string) => {
+      return apiFetch<{ message: string }>(`/api/admin/users/${userId}/activate`, {
+        method: 'PATCH',
+        token,
+      });
+    },
+    deactivateUser: async (token: string, userId: string) => {
+      return apiFetch<{ message: string }>(`/api/admin/users/${userId}/deactivate`, {
+        method: 'PATCH',
+        token,
+      });
     },
   },
 };
