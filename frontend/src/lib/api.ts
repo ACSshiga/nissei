@@ -29,6 +29,11 @@ export async function apiFetch<T>(
     throw new Error(error.detail || `HTTP ${response.status}`);
   }
 
+  // 204 No Content の場合はJSONパースしない
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
   return response.json();
 }
 
@@ -56,7 +61,10 @@ export interface Project {
   shinchoku_id?: string;
   start_date?: string;
   completion_date?: string;
+  shipment_date?: string;
+  delivery_date?: string;
   drawing_deadline?: string;
+  memo?: string;
   is_active: boolean;
   created_by?: string;
   created_at: string;
