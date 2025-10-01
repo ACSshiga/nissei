@@ -35,7 +35,7 @@
 1. 変更をコミット（[コミット規約](./ai-rules/COMMIT_GUIDELINES.md)に従う）
 2. リモートブランチにpush
 3. PRを作成（[PR規約](./ai-rules/PR_GUIDELINES.md)に従う）
-4. **必須**: Codex MCP でレビューを依頼（[PRマージプロセス](./ai-rules/PR_MERGE_PROCESS.md)参照）
+4. **必須**: Task tool (サブエージェント) でレビューを依頼（[PRマージプロセス](./ai-rules/PR_MERGE_PROCESS.md)参照）
 5. レビュー完了後にmainへマージ
 6. **必須**: マージ後に docs/ の更新が必要か確認・更新
 
@@ -81,7 +81,7 @@ User ID: 00000000-0000-4000-8000-000000000000
 詳細は [ai-rules/PR_MERGE_PROCESS.md](./ai-rules/PR_MERGE_PROCESS.md) を参照。
 
 ### レビュー方法（必須）
-1. PR作成直後に **Codex MCP** でレビュー依頼
+1. PR作成直後に **Task tool (サブエージェント)** でレビュー依頼
 2. レビュー結果を評価（Critical/Major/Minor）
 3. 指摘事項を確認し、必要に応じて修正・Issue化
 4. レビュー承認後にmainへマージ
@@ -93,13 +93,15 @@ User ID: 00000000-0000-4000-8000-000000000000
 詳細は [ai-rules/MCP_USAGE.md](./ai-rules/MCP_USAGE.md) を参照。
 
 ### 利用可能なMCP
-- **codex**: PRレビュー・深掘り解析・アーキテクチャ相談（最重要）
 - **context7**: RAG/検索支援
 - **playwright**: E2Eテスト自動化
 - **github**: Issue/PR操作
 - **desktop-commander**: ローカルPC操作
 - **serena**: 高度な自動化
 - **supabase**: DB/認証/ストレージ連携
+
+### PRレビュー
+- **Task tool (サブエージェント)**: PRレビュー・複雑なタスクの委任（高速）
 
 ## Context7利用
 
