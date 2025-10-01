@@ -18,13 +18,14 @@ cd nissei
 
 ### 2. 環境変数の設定
 
-`.env.example` をコピーして `.env` を作成：
+各サービスの `.env.example` をコピーして `.env` を作成：
 
 ```bash
-cp .env.example .env
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
 ```
 
-必要な環境変数を設定：
+必要な環境変数を設定（`backend/.env`）：
 
 ```env
 # Supabase
@@ -122,8 +123,14 @@ alembic upgrade head
 
 ### 初期データ投入
 
-```bash
-python scripts/seed_data.py
+⚠️ **注意**: 初期データ投入スクリプトは現在未実装です。
+テストユーザーは以下の情報を使用してください：
+
+```
+Email: qa+shared@example.com
+Password: SharedDev!2345
+ユーザー名: qa_shared
+ユーザーID: 00000000-0000-4000-8000-000000000000
 ```
 
 ## トラブルシューティング
