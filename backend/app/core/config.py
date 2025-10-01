@@ -1,10 +1,15 @@
 from pydantic_settings import BaseSettings
 from typing import Optional
+from pydantic import ConfigDict
 
 
 class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = "postgresql://nissei:nissei_dev_password@localhost:5432/nissei_db"
+
+    # Supabase (オプション、今後のAuth/Storage連携用)
+    SUPABASE_URL: Optional[str] = None
+    SUPABASE_ANON_KEY: Optional[str] = None
 
     # JWT
     JWT_SECRET_KEY: str = "your-secret-key-change-in-production"
@@ -21,9 +26,11 @@ class Settings(BaseSettings):
     # CORS
     CORS_ORIGINS: list = ["http://localhost:3000"]
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+    model_config = ConfigDict(
+        env_file=".env",
+        case_sensitive=True,
+        extra="ignore"  # 追加フィールドを無視
+    )
 
 
 settings = Settings()

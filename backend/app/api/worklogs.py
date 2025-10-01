@@ -1,15 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
-from sqlalchemy import func
-from typing import Optional
+from supabase import Client
+from typing import Optional, Dict, Any
 from uuid import UUID
+import uuid
 from datetime import date
 
 from app.core.database import get_db
 from app.api.auth import get_current_user
-from app.models.user import User
-from app.models.worklog import WorkLog
-from app.models.project import Project
 from app.schemas.worklog import (
     WorkLogCreate,
     WorkLogUpdate,
@@ -23,28 +20,37 @@ router = APIRouter()
 @router.post("", response_model=WorkLogResponse, status_code=201)
 def create_worklog(
     worklog_data: WorkLogCreate,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    db: Client = Depends(get_db),
 ):
     """工数入力を新規作成"""
     # 案件の存在確認
-    project = db.query(Project).filter(Project.id == worklog_data.project_id).first()
-    if not project:
+    project_response = db.table("projects").select("id, actual_hours").eq("id", str(worklog_data.project_id)).execute()
+    if not project_response.data:
         raise HTTPException(status_code=404, detail="案件が見つかりません")
 
+    project = project_response.data[0]
+
     # 新規工数入力作成
-    db_worklog = WorkLog(
-        **worklog_data.model_dump(),
-        user_id=current_user.id,
-    )
-    db.add(db_worklog)
+    new_worklog = {
+        "id": str(uuid.uuid4()),
+        **worklog_data.model_dump(mode="json"),
+        "user_id": current_user["id"],
+    }
+
+    worklog_response = db.table("worklogs").insert(new_worklog).execute()
+
+    if not worklog_response.data:
+        raise HTTPException(
+            status_code=500,
+            detail="工数入力の作成に失敗しました"
+        )
 
     # 案件の実績工数を更新
-    project.actual_hours += worklog_data.duration_minutes
+    new_actual_hours = (project.get("actual_hours") or 0) + worklog_data.duration_minutes
+    db.table("projects").update({"actual_hours": new_actual_hours}).eq("id", str(worklog_data.project_id)).execute()
 
-    db.commit()
-    db.refresh(db_worklog)
-    return db_worklog
+    return worklog_response.data[0]
 
 
 @router.get("", response_model=WorkLogListResponse)
@@ -54,29 +60,38 @@ def list_worklogs(
     project_id: Optional[UUID] = Query(None, description="案件IDでフィルタ"),
     work_date: Optional[date] = Query(None, description="作業日でフィルタ"),
     user_id: Optional[UUID] = Query(None, description="ユーザーIDでフィルタ"),
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    db: Client = Depends(get_db),
 ):
     """工数入力一覧を取得"""
-    query = db.query(WorkLog)
+    query = db.table("worklogs").select("*")
 
     # フィルタリング
     if project_id:
-        query = query.filter(WorkLog.project_id == project_id)
+        query = query.eq("project_id", str(project_id))
     if work_date:
-        query = query.filter(WorkLog.work_date == work_date)
+        query = query.eq("work_date", work_date.isoformat())
     if user_id:
-        query = query.filter(WorkLog.user_id == user_id)
+        query = query.eq("user_id", str(user_id))
 
     # 総件数取得
-    total = query.count()
+    count_query = db.table("worklogs").select("id", count="exact")
+    if project_id:
+        count_query = count_query.eq("project_id", str(project_id))
+    if work_date:
+        count_query = count_query.eq("work_date", work_date.isoformat())
+    if user_id:
+        count_query = count_query.eq("user_id", str(user_id))
+
+    count_response = count_query.execute()
+    total = count_response.count if count_response.count is not None else 0
 
     # ページネーション
     offset = (page - 1) * per_page
-    worklogs = query.order_by(WorkLog.work_date.desc(), WorkLog.created_at.desc()).offset(offset).limit(per_page).all()
+    worklogs_response = query.order("work_date", desc=True).order("created_at", desc=True).range(offset, offset + per_page - 1).execute()
 
     return WorkLogListResponse(
-        worklogs=worklogs,
+        worklogs=worklogs_response.data,
         total=total,
         page=page,
         per_page=per_page,
@@ -86,125 +101,137 @@ def list_worklogs(
 @router.get("/{worklog_id}", response_model=WorkLogResponse)
 def get_worklog(
     worklog_id: UUID,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    db: Client = Depends(get_db),
 ):
     """工数入力詳細を取得"""
-    worklog = db.query(WorkLog).filter(WorkLog.id == worklog_id).first()
-    if not worklog:
+    response = db.table("worklogs").select("*").eq("id", str(worklog_id)).execute()
+    if not response.data:
         raise HTTPException(status_code=404, detail="工数入力が見つかりません")
-    return worklog
+    return response.data[0]
 
 
 @router.put("/{worklog_id}", response_model=WorkLogResponse)
 def update_worklog(
     worklog_id: UUID,
     worklog_data: WorkLogUpdate,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    db: Client = Depends(get_db),
 ):
     """工数入力を更新"""
-    worklog = db.query(WorkLog).filter(WorkLog.id == worklog_id).first()
-    if not worklog:
+    worklog_response = db.table("worklogs").select("*").eq("id", str(worklog_id)).execute()
+    if not worklog_response.data:
         raise HTTPException(status_code=404, detail="工数入力が見つかりません")
 
-    # 作業時間が変更される場合、案件の実績工数を調整
-    old_duration = worklog.duration_minutes
-    update_data = worklog_data.model_dump(exclude_unset=True)
+    worklog = worklog_response.data[0]
+    old_duration = worklog["duration_minutes"]
+
+    # 更新データ
+    update_data = worklog_data.model_dump(exclude_unset=True, mode="json")
     new_duration = update_data.get("duration_minutes", old_duration)
 
+    # 作業時間が変更される場合、案件の実績工数を調整
     if new_duration != old_duration:
-        project = db.query(Project).filter(Project.id == worklog.project_id).first()
-        if project:
-            project.actual_hours = project.actual_hours - old_duration + new_duration
+        project_response = db.table("projects").select("actual_hours").eq("id", worklog["project_id"]).execute()
+        if project_response.data:
+            project = project_response.data[0]
+            new_actual_hours = (project.get("actual_hours") or 0) - old_duration + new_duration
+            db.table("projects").update({"actual_hours": new_actual_hours}).eq("id", worklog["project_id"]).execute()
 
     # 更新
-    for key, value in update_data.items():
-        setattr(worklog, key, value)
+    response = db.table("worklogs").update(update_data).eq("id", str(worklog_id)).execute()
 
-    db.commit()
-    db.refresh(worklog)
-    return worklog
+    if not response.data:
+        raise HTTPException(status_code=500, detail="工数入力の更新に失敗しました")
+
+    return response.data[0]
 
 
 @router.delete("/{worklog_id}", status_code=204)
 def delete_worklog(
     worklog_id: UUID,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    db: Client = Depends(get_db),
 ):
     """工数入力を削除"""
-    worklog = db.query(WorkLog).filter(WorkLog.id == worklog_id).first()
-    if not worklog:
+    worklog_response = db.table("worklogs").select("*").eq("id", str(worklog_id)).execute()
+    if not worklog_response.data:
         raise HTTPException(status_code=404, detail="工数入力が見つかりません")
 
-    # 案件の実績工数を減算
-    project = db.query(Project).filter(Project.id == worklog.project_id).first()
-    if project:
-        project.actual_hours -= worklog.duration_minutes
+    worklog = worklog_response.data[0]
 
-    db.delete(worklog)
-    db.commit()
+    # 案件の実績工数を減算
+    project_response = db.table("projects").select("actual_hours").eq("id", worklog["project_id"]).execute()
+    if project_response.data:
+        project = project_response.data[0]
+        new_actual_hours = (project.get("actual_hours") or 0) - worklog["duration_minutes"]
+        db.table("projects").update({"actual_hours": new_actual_hours}).eq("id", worklog["project_id"]).execute()
+
+    # 削除
+    db.table("worklogs").delete().eq("id", str(worklog_id)).execute()
     return None
 
 
 @router.get("/summary/{project_id}")
 def get_worklog_summary(
     project_id: UUID,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    db: Client = Depends(get_db),
 ):
     """案件の工数集計を取得"""
     # 案件の存在確認
-    project = db.query(Project).filter(Project.id == project_id).first()
-    if not project:
+    project_response = db.table("projects").select("management_no, estimated_hours, actual_hours").eq("id", str(project_id)).execute()
+    if not project_response.data:
         raise HTTPException(status_code=404, detail="案件が見つかりません")
 
-    # ユーザー別工数集計
-    user_summary = (
-        db.query(
-            User.username,
-            func.sum(WorkLog.duration_minutes).label("total_minutes"),
-            func.count(WorkLog.id).label("entry_count"),
-        )
-        .join(WorkLog, WorkLog.user_id == User.id)
-        .filter(WorkLog.project_id == project_id)
-        .group_by(User.id, User.username)
-        .all()
-    )
+    project = project_response.data[0]
 
-    # 日別工数集計
-    daily_summary = (
-        db.query(
-            WorkLog.work_date,
-            func.sum(WorkLog.duration_minutes).label("total_minutes"),
-            func.count(WorkLog.id).label("entry_count"),
-        )
-        .filter(WorkLog.project_id == project_id)
-        .group_by(WorkLog.work_date)
-        .order_by(WorkLog.work_date.desc())
-        .all()
-    )
+    # 全工数データを取得
+    worklogs_response = db.table("worklogs").select("user_id, duration_minutes, work_date").eq("project_id", str(project_id)).execute()
+    worklogs = worklogs_response.data
+
+    # ユーザー名を取得
+    user_ids = list(set([w["user_id"] for w in worklogs]))
+    users_map = {}
+    if user_ids:
+        users_response = db.table("users").select("id, username").in_("id", user_ids).execute()
+        users_map = {u["id"]: u["username"] for u in users_response.data}
+
+    # ユーザー別集計
+    user_summary_dict = {}
+    for worklog in worklogs:
+        user_id = worklog["user_id"]
+        if user_id not in user_summary_dict:
+            user_summary_dict[user_id] = {
+                "username": users_map.get(user_id, "Unknown"),
+                "total_minutes": 0,
+                "entry_count": 0
+            }
+        user_summary_dict[user_id]["total_minutes"] += worklog["duration_minutes"]
+        user_summary_dict[user_id]["entry_count"] += 1
+
+    user_summary = list(user_summary_dict.values())
+
+    # 日別集計
+    daily_summary_dict = {}
+    for worklog in worklogs:
+        work_date = worklog["work_date"]
+        if work_date not in daily_summary_dict:
+            daily_summary_dict[work_date] = {
+                "work_date": work_date,
+                "total_minutes": 0,
+                "entry_count": 0
+            }
+        daily_summary_dict[work_date]["total_minutes"] += worklog["duration_minutes"]
+        daily_summary_dict[work_date]["entry_count"] += 1
+
+    daily_summary = sorted(daily_summary_dict.values(), key=lambda x: x["work_date"], reverse=True)
 
     return {
-        "project_id": project_id,
-        "management_no": project.management_no,
-        "estimated_hours": project.estimated_hours or 0,
-        "actual_hours": project.actual_hours,
-        "by_user": [
-            {
-                "username": row.username,
-                "total_minutes": row.total_minutes,
-                "entry_count": row.entry_count,
-            }
-            for row in user_summary
-        ],
-        "by_date": [
-            {
-                "work_date": row.work_date.isoformat(),
-                "total_minutes": row.total_minutes,
-                "entry_count": row.entry_count,
-            }
-            for row in daily_summary
-        ],
+        "project_id": str(project_id),
+        "management_no": project["management_no"],
+        "estimated_hours": project.get("estimated_hours") or 0,
+        "actual_hours": project.get("actual_hours") or 0,
+        "by_user": user_summary,
+        "by_date": daily_summary,
     }
