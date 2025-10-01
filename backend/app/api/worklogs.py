@@ -41,10 +41,11 @@ def create_worklog(
         "duration_minutes": worklog_dict["duration_minutes"],
         "user_id": current_user["id"],
     }
-    # オプションフィールドは後でカラムを追加後に有効化
+    # オプションフィールド（start_time, end_timeは未実装）
     # "start_time": worklog_dict.get("start_time"),
     # "end_time": worklog_dict.get("end_time"),
-    # "work_content": worklog_dict.get("work_content"),
+    if "work_content" in worklog_dict:
+        new_worklog["work_content"] = worklog_dict["work_content"]
 
     worklog_response = db.table("worklogs").insert(new_worklog).execute()
 
@@ -149,13 +150,13 @@ def update_worklog(
         update_data["work_date"] = worklog_dict["work_date"]
     if "duration_minutes" in worklog_dict:
         update_data["duration_minutes"] = worklog_dict["duration_minutes"]
-    # オプションフィールドは後でカラムを追加後に有効化
+    # オプションフィールド（start_time, end_timeは未実装）
     # if "start_time" in worklog_dict:
     #     update_data["start_time"] = worklog_dict["start_time"]
     # if "end_time" in worklog_dict:
     #     update_data["end_time"] = worklog_dict["end_time"]
-    # if "work_content" in worklog_dict:
-    #     update_data["work_content"] = worklog_dict["work_content"]
+    if "work_content" in worklog_dict:
+        update_data["work_content"] = worklog_dict["work_content"]
 
     new_project_id = update_data.get("project_id", old_project_id)
     new_duration = update_data.get("duration_minutes", old_duration)
