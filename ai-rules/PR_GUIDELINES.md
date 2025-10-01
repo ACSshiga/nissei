@@ -41,16 +41,86 @@ Closes #123
 - Codexが自動的にコードレビューを実施
 - レビュー結果はDiscordに自動通知
 
-### 2. レビュー対応
+### 2. レビュー対応（修正が必要な場合）
 
-- Codexの指摘事項を確認
-- 必要に応じて修正をコミット・プッシュ
-- 重要な指摘には返信コメントで対応内容を説明
+#### 指摘事項の確認
+```bash
+# MCP GitHub APIでレビューコメントを取得
+mcp__github__get_pull_request_review_comments
+```
 
-### 3. マージ
+- 各指摘の優先度を確認（P1 Badge = 重要度高）
+- すべての指摘事項をリスト化
 
-- Codexレビューが承認されたらマージ
-- マージ方法: Squash merge（推奨）
+#### 修正の実施
+1. **指摘箇所を修正**
+2. **コミット・push**
+   ```bash
+   git add .
+   git commit -m "fix: Codexレビュー指摘事項を修正
+
+   - 指摘1の修正内容
+   - 指摘2の修正内容
+
+   🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+   Co-Authored-By: Claude <noreply@anthropic.com>"
+   git push
+   ```
+
+#### 再レビュー依頼（必須）
+⚠️ **PRを更新するたびに必ず実施**
+
+```
+@codex review
+```
+
+- PRにコメントで再レビューを依頼
+- 修正内容を簡潔に報告（推奨）:
+  ```markdown
+  ## ✅ Codexレビュー指摘事項を修正しました
+
+  ### 修正内容
+  - 修正1: 具体的な内容
+  - 修正2: 具体的な内容
+
+  修正コミット: <commit-hash>
+  ```
+
+#### 修正完了まで繰り返し
+- すべての指摘が解決されるまで「修正 → push → @codex review」を繰り返す
+
+### 3. マージ（レビュー承認後）
+
+#### マージ前の確認
+```bash
+# PR状態を確認
+mcp__github__get_pull_request
+
+# 確認項目:
+# - mergeable: true
+# - Codexレビューが承認済み
+# - すべての指摘事項が解決済み
+```
+
+#### mainブランチへマージ
+```bash
+# MCP GitHub APIを使用
+mcp__github__merge_pull_request
+```
+
+- **merge_method**: `squash`（推奨）または `merge`
+- コミットメッセージを確認
+- Discord通知が自動送信される
+
+#### マージ後のクリーンアップ（任意）
+```bash
+# ローカルブランチ削除
+git branch -d <ブランチ名>
+
+# リモートブランチ削除
+git push origin --delete <ブランチ名>
+```
 
 ## PRの種類別テンプレート
 

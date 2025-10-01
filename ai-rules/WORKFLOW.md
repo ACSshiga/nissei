@@ -61,8 +61,60 @@ git push -u origin <ブランチ名>
 - Codexの指摘事項を確認し、必要に応じて修正
 - 💬 Discord通知: コメント・レビューは自動的にDiscordへ通知
 
-### 5. レビュー完了後にマージ
-- Codexレビューが承認されたらmainブランチへマージ
+### 5. 修正が必要な場合
+Codexからの指摘事項がある場合：
+
+1. **指摘事項を確認**
+   - `mcp__github__get_pull_request_review_comments` でレビューコメントを取得
+   - 各指摘の優先度（P1 Badge等）を確認
+
+2. **修正を実施**
+   - 指摘された箇所を修正
+   - コミット・push
+   ```bash
+   git add .
+   git commit -m "fix: Codexレビュー指摘事項を修正
+
+   - 指摘1の修正内容
+   - 指摘2の修正内容
+
+   🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+   Co-Authored-By: Claude <noreply@anthropic.com>"
+   git push
+   ```
+
+3. **再度Codexレビュー依頼**
+   - PRを更新するたびに再レビューを依頼
+   ```
+   @codex review
+   ```
+   - 修正内容をコメントで報告（推奨）
+
+4. **修正完了まで繰り返し**
+   - すべての指摘が解決されるまで「修正 → push → レビュー依頼」を繰り返す
+
+### 6. レビュー承認後にマージ
+Codexレビューが承認されたら：
+
+1. **PR状態を確認**
+   - `mcp__github__get_pull_request` でPR状態を確認
+   - `mergeable: true` であることを確認
+
+2. **mainブランチへマージ**
+   ```bash
+   # MCP GitHub APIを使用
+   mcp__github__merge_pull_request
+   ```
+   - merge_method: `squash` または `merge` （プロジェクト規約に従う）
+   - コミットメッセージを確認
+
+3. **ブランチ削除（任意）**
+   - マージ後、不要になったブランチを削除可能
+   ```bash
+   git branch -d <ブランチ名>
+   git push origin --delete <ブランチ名>
+   ```
 
 ## 詳細ガイドライン
 
