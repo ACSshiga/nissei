@@ -13,7 +13,7 @@ users
 ├── id (PK)
 ├── email
 ├── username
-├── password_hash
+├── hashed_password
 ├── is_active
 └── is_admin
 
@@ -84,7 +84,7 @@ work_types (マスタ)
 | id | UUID | NO | gen_random_uuid() | 主キー |
 | email | VARCHAR(255) | NO | - | メールアドレス（ユニーク） |
 | username | VARCHAR(100) | NO | - | ユーザー名 |
-| password_hash | VARCHAR(255) | NO | - | ハッシュ化パスワード |
+| hashed_password | VARCHAR(255) | NO | - | ハッシュ化パスワード |
 | is_active | BOOLEAN | NO | true | アクティブフラグ |
 | is_admin | BOOLEAN | NO | false | 管理者フラグ |
 | created_at | TIMESTAMP | NO | CURRENT_TIMESTAMP | 作成日時 |
