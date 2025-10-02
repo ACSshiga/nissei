@@ -25,7 +25,39 @@
 
 ## 開発ワークフロー
 
-詳細は [ai-rules/nissei/WORKFLOW.md](./ai-rules/nissei/WORKFLOW.md) を参照。
+### 基本フロー
+```
+セッション開始（Serenaメモリ読み込み）
+    ↓
+フェーズ・仕様確認
+    ↓
+ブランチ作成
+    ↓
+実装・テスト
+    ↓
+PR作成→レビュー→マージ
+    ↓
+ドキュメント更新（docs/ + Serenaメモリ）
+    ↓
+フェーズ完了確認（必要に応じて）
+```
+
+詳細は以下を参照：
+- [ai-rules/common/WORKFLOW.md](./ai-rules/common/WORKFLOW.md) - 汎用ワークフロー
+- [ai-rules/common/PHASE_MANAGEMENT.md](./ai-rules/common/PHASE_MANAGEMENT.md) - フェーズ管理
+- [ai-rules/nissei/WORKFLOW.md](./ai-rules/nissei/WORKFLOW.md) - nissei固有ワークフロー
+
+### セッション開始時（必須）
+1. **Serenaメモリ読み込み**（最重要）
+   ```
+   mcp__serena__activate_project
+   mcp__serena__list_memories
+   mcp__serena__read_memory("current_issues_and_priorities.md")
+   mcp__serena__read_memory("phase_progress.md")  # フェーズ管理時
+   ```
+2. **フェーズ・仕様確認**
+   - 現在のフェーズと実装内容を確認
+   - 不明点はユーザーに質問
 
 ### 作業開始時
 1. 専用ブランチを作成（`feat-*`, `fix-*`, `docs-*` 等）
@@ -37,9 +69,22 @@
 3. PRを作成（[PR規約](./ai-rules/nissei/PR_AND_REVIEW.md)に従う）
 4. **必須**: code-reviewer サブエージェントでレビューを依頼
 5. レビュー完了後にmainへマージ
-6. **必須**: マージ後に docs/ の更新が必要か確認・更新
+6. **必須**: マージ後の更新（docs/ と .serena/memories/ の両方）
 
-⚠️ **重要**: **PR作成→レビュー→マージまでを1セットの作業として完了させる**
+⚠️ **重要**: **PR作成→レビュー→マージ→ドキュメント更新までを1セットの作業として完了させる**
+
+### マージ後の必須作業
+1. **docs/ の更新**: API.md, DATABASE.md など人間用ドキュメントを更新
+2. **Serenaメモリの更新**: `.serena/memories/` 内のAI用詳細仕様を更新
+   - 変更に応じて該当メモリファイルを更新（api_specifications.md, database_specifications.md等）
+   - phase_progress.md の進捗を更新（フェーズ管理時）
+   - 必要に応じて current_issues_and_priorities.md も更新
+
+### フェーズ完了時（該当する場合）
+1. **仕様との整合性確認**（ユーザーと最終確認）
+2. 全機能の動作確認・E2Eテスト
+3. ドキュメント完全更新（docs/PHASES.md + Serenaメモリ）
+4. 次フェーズの準備
 
 ## コミット前の必須確認
 
