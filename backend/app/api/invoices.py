@@ -131,6 +131,9 @@ def close_invoice(
     db: Client = Depends(get_db),
 ):
     """請求書を確定（管理者のみ）"""
+    invoice_id = None
+    is_new_invoice = False
+
     try:
         # プレビューデータを取得
         preview = preview_invoice(year=year, month=month, current_user=current_user, db=db)
@@ -175,17 +178,22 @@ def close_invoice(
                 raise HTTPException(status_code=500, detail="請求書の作成に失敗しました")
 
             invoice_id = invoice_response.data[0]["id"]
+            is_new_invoice = True
 
-        # 明細を登録
-        for item in preview.items:
-            item_data = {
+        # 明細を一括登録（N+1クエリ回避）
+        items_data = [
+            {
                 "invoice_id": invoice_id,
                 "project_id": str(item.project_id),
                 "management_no": item.management_no,
                 "work_content": item.work_content,
                 "total_hours": float(item.total_hours)
             }
-            db.table("invoice_items").insert(item_data).execute()
+            for item in preview.items
+        ]
+
+        if items_data:
+            db.table("invoice_items").insert(items_data).execute()
 
         # 確定した請求書を取得
         result = db.table("invoices").select("*").eq("id", invoice_id).execute()
@@ -209,6 +217,14 @@ def close_invoice(
         raise
     except Exception as e:
         logger.error(f"Invoice close failed: {e}", exc_info=True)
+        # エラー時のロールバック相当処理（新規作成の場合のみ削除）
+        if is_new_invoice and invoice_id:
+            try:
+                db.table("invoice_items").delete().eq("invoice_id", invoice_id).execute()
+                db.table("invoices").delete().eq("id", invoice_id).execute()
+            except Exception as rollback_error:
+                logger.error(f"Rollback failed: {rollback_error}", exc_info=True)
+
         raise HTTPException(
             status_code=500,
             detail="請求書の確定に失敗しました"

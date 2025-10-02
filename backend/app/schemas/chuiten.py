@@ -38,6 +38,7 @@ class ChuitenCreate(ChuitenBase):
 
 
 class ChuitenUpdate(BaseModel):
+    seq_no: Optional[int] = Field(None, description="連番（変更時は重複注意）")
     target_series: Optional[str] = None
     target_model_pattern: Optional[str] = None
     category_id: Optional[UUID] = None
