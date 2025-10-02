@@ -8,6 +8,10 @@ from datetime import date, datetime
 from decimal import Decimal
 import io
 import csv
+import re
+import logging
+
+logger = logging.getLogger(__name__)
 
 from app.core.database import get_db
 from app.api.auth import get_current_user, require_admin
@@ -22,23 +26,52 @@ from app.schemas.invoice import (
 router = APIRouter()
 
 
+def validate_month_format(month: str) -> tuple[str, str]:
+    """
+    月パラメータを検証し、開始日と終了日を返す
+
+    Args:
+        month: YYYY-MM形式の文字列
+
+    Returns:
+        tuple[str, str]: (start_date, end_date) in YYYY-MM-DD format
+
+    Raises:
+        HTTPException: 不正な月形式の場合
+    """
+    if not re.match(r'^\d{4}-(0[1-9]|1[0-2])$', month):
+        raise HTTPException(
+            status_code=400,
+            detail="月はYYYY-MM形式で指定してください（例: 2025-10）"
+        )
+
+    try:
+        month_date = datetime.strptime(month, "%Y-%m")
+        start_date = month_date.strftime("%Y-%m-01")
+
+        # 次月の1日を計算
+        if month_date.month == 12:
+            next_month = month_date.replace(year=month_date.year + 1, month=1)
+        else:
+            next_month = month_date.replace(month=month_date.month + 1)
+        end_date = next_month.strftime("%Y-%m-01")
+
+        return start_date, end_date
+    except ValueError as e:
+        logger.error(f"Invalid month parameter: {month}, error: {e}")
+        raise HTTPException(status_code=400, detail="不正な月形式です")
+
+
 @router.get("/preview", response_model=InvoicePreviewResponse)
 def preview_invoice(
     month: str = Query(..., description="YYYY-MM形式の月"),
     current_user: Dict[str, Any] = Depends(get_current_user),
     db: Client = Depends(get_db),
 ):
-    """指定月の請求書プレビュー（work_logsから実工数を集計）"""
+    """指定月の請求書プレビュー（worklogsから実工数を集計）"""
     try:
-        # 月の開始日と終了日を計算
-        year, month_num = month.split('-')
-        start_date = f"{year}-{month_num}-01"
-
-        # 次月の1日を計算（終了日として使用）
-        if month_num == "12":
-            end_date = f"{int(year)+1}-01-01"
-        else:
-            end_date = f"{year}-{int(month_num)+1:02d}-01"
+        # 月パラメータを検証
+        start_date, end_date = validate_month_format(month)
 
         # worklogsから指定月の工数を取得（プロジェクト別に集計）
         worklogs_response = db.table("worklogs").select("""
@@ -62,14 +95,21 @@ def preview_invoice(
                 project_hours[project_id] = 0
             project_hours[project_id] += minutes
 
-        # プロジェクト情報を取得
+        # プロジェクト情報を取得（N+1問題対策：バッチクエリ）
         project_ids = list(project_hours.keys())
-        # 一時的な回避策：eq()を連鎖させる代わりに、各プロジェクトを個別に取得
-        projects_data = []
-        for project_id in project_ids:
-            response = db.table("projects").select("id, management_no, machine_no").eq("id", project_id).execute()
-            if response.data:
-                projects_data.extend(response.data)
+        if not project_ids:
+            return InvoicePreviewResponse(
+                month=month,
+                total_hours=Decimal("0.00"),
+                items=[]
+            )
+
+        # in_()で一括取得
+        projects_response = db.table("projects").select(
+            "id, management_no, machine_no"
+        ).in_("id", project_ids).execute()
+
+        projects_data = projects_response.data or []
 
         if not projects_data:
             return InvoicePreviewResponse(
@@ -110,9 +150,10 @@ def preview_invoice(
         )
 
     except Exception as e:
+        logger.error(f"Invoice preview failed: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"請求プレビューの取得に失敗しました: {str(e)}"
+            detail="請求プレビューの取得に失敗しました"
         )
 
 
@@ -123,83 +164,78 @@ def close_invoice(
     db: Client = Depends(get_db),
 ):
     """請求書を確定（管理者のみ）"""
-    # プレビューデータを取得
-    preview = preview_invoice(month=month, current_user=current_user, db=db)
-
-    if not preview.items:
-        raise HTTPException(status_code=400, detail="請求対象の工数がありません")
-
-    # 請求書番号を生成（INV-YYYYMM-001形式）
-    year_month = month.replace('-', '')
-
-    # 同月の既存請求書を確認
-    existing_response = db.table("invoices").select("invoice_number").like(
-        "invoice_number", f"INV-{year_month}-%"
-    ).execute()
-
-    seq = 1
-    if existing_response.data:
-        # 最大番号を取得
-        max_num = 0
-        for inv in existing_response.data:
-            num_str = inv["invoice_number"].split('-')[-1]
-            try:
-                num = int(num_str)
-                if num > max_num:
-                    max_num = num
-            except ValueError:
-                pass
-        seq = max_num + 1
-
-    invoice_number = f"INV-{year_month}-{seq:03d}"
-
-    # 請求書を作成
-    invoice_data = {
-        "id": str(uuid.uuid4()),
-        "invoice_number": invoice_number,
-        "issue_date": str(date.today()),
-        "total_amount": float(preview.total_hours),
-        "status": "sent",
-    }
-
     try:
-        invoice_response = db.table("invoices").insert(invoice_data).execute()
+        # 月パラメータを検証
+        validate_month_format(month)
+
+        # プレビューデータを取得
+        preview = preview_invoice(month=month, current_user=current_user, db=db)
+
+        if not preview.items:
+            raise HTTPException(status_code=400, detail="請求対象の工数がありません")
+
+        # 請求書番号を生成（INV-YYYYMM-001形式）
+        year_month = month.replace('-', '')
+
+        # 同月の既存請求書を確認（SQLインジェクション対策：範囲検索を使用）
+        existing_response = db.table("invoices").select("invoice_number") \
+            .gte("invoice_number", f"INV-{year_month}-001") \
+            .lte("invoice_number", f"INV-{year_month}-999").execute()
+
+        seq = 1
+        if existing_response.data:
+            # 最大番号を取得
+            max_num = 0
+            for inv in existing_response.data:
+                num_str = inv["invoice_number"].split('-')[-1]
+                try:
+                    num = int(num_str)
+                    if num > max_num:
+                        max_num = num
+                except ValueError:
+                    pass
+            seq = max_num + 1
+
+        invoice_number = f"INV-{year_month}-{seq:03d}"
+
+        # 請求書明細データを準備（JSONB形式）
+        items_jsonb = []
+        for idx, item in enumerate(preview.items):
+            items_jsonb.append({
+                "management_no": item.management_no,
+                "machine_no": item.machine_no,
+                "actual_hours": str(item.actual_hours),  # Decimal精度保持のため文字列化
+                "sort_order": idx,
+            })
+
+        # ストアドプロシージャを使用してトランザクション保証
+        result = db.rpc(
+            "create_invoice_with_items",
+            {
+                "p_invoice_number": invoice_number,
+                "p_issue_date": str(date.today()),
+                "p_total_amount": str(preview.total_hours),  # Decimal精度保持
+                "p_status": "sent",
+                "p_items": items_jsonb
+            }
+        ).execute()
+
+        if not result.data:
+            raise HTTPException(status_code=500, detail="請求書の作成に失敗しました")
+
+        invoice_id = result.data
+
+        # 作成した請求書を取得（明細含む）
+        return get_invoice(invoice_id=UUID(invoice_id), current_user=current_user, db=db)
+
+    except HTTPException:
+        raise
     except Exception as e:
+        logger.error(f"Invoice creation failed: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"請求書の作成に失敗しました: {str(e)}"
+            detail="請求書の作成に失敗しました"
         )
-
-    if not invoice_response.data:
-        raise HTTPException(status_code=500, detail="請求書の作成に失敗しました")
-
-    invoice = invoice_response.data[0]
-    invoice_id = invoice["id"]
-
-    # 請求書明細を作成
-    items_data = []
-    for idx, item in enumerate(preview.items):
-        items_data.append({
-            "id": str(uuid.uuid4()),
-            "invoice_id": invoice_id,
-            "management_no": item.management_no,
-            "machine_no": item.machine_no,
-            "actual_hours": float(item.actual_hours),
-            "sort_order": idx,
-        })
-
-    try:
-        db.table("invoice_items").insert(items_data).execute()
-    except Exception as e:
-        # ロールバック（請求書を削除）
-        db.table("invoices").delete().eq("id", invoice_id).execute()
-        raise HTTPException(
-            status_code=500,
-            detail=f"請求書明細の作成に失敗しました: {str(e)}"
-        )
-
-    # 作成した請求書を取得（明細含む）
-    return get_invoice(invoice_id=UUID(invoice_id), current_user=current_user, db=db)
 
 
 @router.get("/export")
@@ -209,6 +245,9 @@ def export_invoice_csv(
     db: Client = Depends(get_db),
 ):
     """請求書CSVエクスポート"""
+    # 月パラメータを検証
+    validate_month_format(month)
+
     # プレビューデータを取得
     preview = preview_invoice(month=month, current_user=current_user, db=db)
 
