@@ -10,20 +10,23 @@
 
 ```
 ai-rules/
-├── common/              # プロジェクト横断（汎用ガイドライン）
-│   ├── COMMIT_GUIDELINES.md
-│   ├── NAMING_CONVENTIONS.md
-│   ├── ISSUE_GUIDELINES.md
-│   └── PR_PROCESS.md
+├── common/                     # プロジェクト横断（汎用ガイドライン）
+│   ├── WORKFLOW.md             # 汎用ワークフロー ⭐ NEW
+│   ├── PHASE_MANAGEMENT.md     # フェーズ管理 ⭐ NEW
+│   ├── DOCUMENTATION_GUIDE.md  # ドキュメント管理 ⭐ NEW
+│   ├── COMMIT_GUIDELINES.md    # コミット規約
+│   ├── NAMING_CONVENTIONS.md   # 命名規則
+│   ├── ISSUE_GUIDELINES.md     # Issue作成
+│   └── PR_PROCESS.md           # PR & レビュー（汎用版）
 │
-├── nissei/              # nissei 専用（プロジェクト固有設定）
-│   ├── WORKFLOW.md
-│   ├── SETUP_AND_MCP.md
-│   ├── TESTING.md
-│   ├── DOCUMENTATION_GUIDE.md
-│   └── PR_AND_REVIEW.md
+├── nissei/                     # nissei 専用（プロジェクト固有設定）
+│   ├── WORKFLOW.md             # 開発ワークフロー（更新済み）
+│   ├── SETUP_AND_MCP.md        # 環境構築 & MCP
+│   ├── TESTING.md              # テスト
+│   ├── DOCUMENTATION_GUIDE.md  # ドキュメント管理（nissei固有）
+│   └── PR_AND_REVIEW.md        # PR & レビュー
 │
-└── README.md            # このファイル
+└── README.md                   # このファイル
 ```
 
 ---
@@ -38,6 +41,21 @@ ai-rules/
 - ✅ 普遍的なベストプラクティス
 
 ### ファイル一覧
+
+**[WORKFLOW.md](./common/WORKFLOW.md)** - 汎用ワークフロー ⭐ NEW
+- セッション開始→実装→PR→マージ→ドキュメント更新の基本フロー
+- Serenaメモリ読み込み手順
+- フェーズ管理との連携
+
+**[PHASE_MANAGEMENT.md](./common/PHASE_MANAGEMENT.md)** - フェーズ管理 ⭐ NEW
+- フェーズ定義と進行フロー
+- フェーズ開始時・完了時の仕様確認
+- PHASES.md と phase_progress.md の管理
+
+**[DOCUMENTATION_GUIDE.md](./common/DOCUMENTATION_GUIDE.md)** - ドキュメント管理 ⭐ NEW
+- docs/ と .serena/memories/ の2層構造
+- マージ後の更新フロー（両方必須）
+- Serenaメモリ操作方法
 
 **[COMMIT_GUIDELINES.md](./common/COMMIT_GUIDELINES.md)** - コミットメッセージガイドライン
 - コミットメッセージの形式（type, subject, body）
@@ -69,7 +87,7 @@ ai-rules/
 **特徴**:
 - ✅ ポート番号（3000, 8000）等の具体的な設定
 - ✅ テストユーザー情報
-- ✅ Serenaメモリ定義（7個）
+- ✅ 主要Serenaメモリファイル群の定義
 - ✅ code-reviewer サブエージェント設定
 
 ### ファイル一覧
@@ -119,47 +137,65 @@ ai-rules/
    memory_file_name: "current_issues_and_priorities.md"
    → 現在の優先度を把握
 
-4. 作業開始
+4. mcp__serena__read_memory
+   memory_file_name: "phase_progress.md"  # フェーズ管理時
+   → 現在のフェーズ・進捗を確認
+
+5. フェーズ・仕様確認
+   - 現在のフェーズと実装内容を確認
+   - 不明点はユーザーに質問
+
+6. 作業開始
 ```
 
-詳細: [nissei/SETUP_AND_MCP.md](./nissei/SETUP_AND_MCP.md) の「Serena MCP」セクション
+詳細: [nissei/SETUP_AND_MCP.md](./nissei/SETUP_AND_MCP.md) の「Serena MCP」セクション、[common/PHASE_MANAGEMENT.md](./common/PHASE_MANAGEMENT.md)
 
 ### 新規タスクを開始する場合
 
-1. [nissei/WORKFLOW.md](./nissei/WORKFLOW.md) を読んで全体の流れを把握
-2. ブランチを作成（`feat-*`, `fix-*`）
-3. 実装・修正を行う（[common/NAMING_CONVENTIONS.md](./common/NAMING_CONVENTIONS.md) 準拠）
-4. [nissei/TESTING.md](./nissei/TESTING.md) に従ってE2Eテストを実施
-5. [common/COMMIT_GUIDELINES.md](./common/COMMIT_GUIDELINES.md) に従ってコミット
-6. [nissei/PR_AND_REVIEW.md](./nissei/PR_AND_REVIEW.md) に従ってPR作成・レビュー・マージ
-7. docs/ の更新が必要か確認・更新
-8. 重要な情報をSerenaメモリに保存
+1. [common/WORKFLOW.md](./common/WORKFLOW.md) で基本フローを把握
+2. [nissei/WORKFLOW.md](./nissei/WORKFLOW.md) でnissei固有の手順を確認
+3. ブランチを作成（`feat-*`, `fix-*`）
+4. 実装・修正を行う（[common/NAMING_CONVENTIONS.md](./common/NAMING_CONVENTIONS.md) 準拠）
+5. [nissei/TESTING.md](./nissei/TESTING.md) に従ってE2Eテストを実施
+6. [common/COMMIT_GUIDELINES.md](./common/COMMIT_GUIDELINES.md) に従ってコミット
+7. [nissei/PR_AND_REVIEW.md](./nissei/PR_AND_REVIEW.md) に従ってPR作成・レビュー・マージ
+8. **docs/ と Serenaメモリの両方を更新**（[common/DOCUMENTATION_GUIDE.md](./common/DOCUMENTATION_GUIDE.md)）
+9. フェーズ完了時は仕様確認（[common/PHASE_MANAGEMENT.md](./common/PHASE_MANAGEMENT.md)）
 
 ---
 
 ## 🔗 ドキュメント間の関係
 
 ```
-WORKFLOW.md（nissei 専用）⭐ 最重要
+common/WORKFLOW.md（汎用）⭐ 基本フロー
+    ├── common/PHASE_MANAGEMENT.md（フェーズ管理）⭐ NEW
+    │   ├── docs/PHASES.md（人間用フェーズ一覧）
+    │   └── .serena/memories/phase_progress.md（AI用進捗）
+    │
+    └── common/DOCUMENTATION_GUIDE.md（ドキュメント管理）⭐ NEW
+        ├── docs/（人間用簡潔版）
+        └── .serena/memories/（AI用詳細版）
+
+nissei/WORKFLOW.md（nissei 専用）⭐ 最重要
     │
     ├── SETUP_AND_MCP.md（nissei 専用）
     │   ├── Serena MCP（メモリ機能・セッション開始時必須）
-    │   └── DOCUMENTATION_GUIDE.md（Serena/docs使い分け）⭐ 必読
+    │   └── nissei/DOCUMENTATION_GUIDE.md（nissei固有のドキュメント）
     │
-    ├── NAMING_CONVENTIONS.md（汎用）
+    ├── common/NAMING_CONVENTIONS.md（汎用）
     │
     ├── TESTING.md（nissei 専用）
     │   └── Playwright MCP（E2Eテスト）
     │
-    ├── COMMIT_GUIDELINES.md（汎用）
+    ├── common/COMMIT_GUIDELINES.md（汎用）
     │
     ├── PR_AND_REVIEW.md（nissei 専用）⭐ 最重要
-    │   ├── PR_PROCESS.md（汎用版の参照）
+    │   ├── common/PR_PROCESS.md（汎用版の参照）
     │   ├── code-reviewer サブエージェント（レビュー）
-    │   ├── DOCUMENTATION_GUIDE.md（docs更新確認）
-    │   └── ISSUE_GUIDELINES.md（Issue作成）
+    │   ├── common/DOCUMENTATION_GUIDE.md（docs更新確認）
+    │   └── common/ISSUE_GUIDELINES.md（Issue作成）
     │
-    └── ISSUE_GUIDELINES.md（汎用）
+    └── common/PHASE_MANAGEMENT.md（フェーズ完了確認）
 ```
 
 ---
@@ -175,28 +211,34 @@ WORKFLOW.md（nissei 専用）⭐ 最重要
 ### どちらに書くべきか
 
 #### common/ に書くべき内容
+- ✅ 汎用ワークフロー（基本フロー）
+- ✅ フェーズ管理（フェーズ進行ルール）
+- ✅ ドキュメント管理（docs/ と Serenaメモリの使い分け）
 - ✅ コミットメッセージの形式
 - ✅ 命名規則（言語・フレームワーク共通）
 - ✅ PR作成プロセス
 - ✅ Issue管理ルール
 
 #### nissei/ に書くべき内容
+- ✅ nissei固有のワークフロー（ポート・テストユーザー等）
 - ✅ ポート番号（3000, 8000）
 - ✅ テストユーザー情報
-- ✅ Serenaメモリ定義
-- ✅ プロジェクト固有のワークフロー
+- ✅ 主要Serenaメモリファイル群の定義
+- ✅ code-reviewerサブエージェント設定
 
 ---
 
 ## ⚠️ 重要な注意事項
 
-- ✅ **毎セッション開始時にSerenaメモリから状況を把握する**（最重要）
+- ✅ **セッション開始時にSerenaメモリから状況を把握**（phase_progress.md含む）
+- ✅ **フェーズ開始時に必ず仕様確認**（ユーザーと合意）
 - ✅ **mainブランチへの直接作業は絶対禁止**
 - ✅ **コミット前に必ず動作確認とE2Eテストを実施**
 - ✅ **PR作成直後に必ずcode-reviewer サブエージェント レビューを依頼**
 - ✅ **Critical問題が存在する場合は絶対にマージしない**
-- ✅ **PR作成→レビュー→マージまでを1セットの作業として完了させる**（PRを溜めない）
-- ✅ **マージ後は必ず docs/ の更新が必要か確認する**
+- ✅ **PR作成→レビュー→マージ→ドキュメント更新までを1セット**（PRを溜めない）
+- ✅ **マージ後は docs/ と Serenaメモリの両方を更新**（必須）
+- ✅ **フェーズ完了時に必ず仕様との整合性確認**（ユーザーと最終確認）
 - ✅ **機密情報（APIキー、パスワード等）はコミットしない**
 
 ---
@@ -229,6 +271,14 @@ WORKFLOW.md（nissei 専用）⭐ 最重要
 
 ## 📝 更新履歴
 
+- **2025-10-02 (4回目)**: フェーズ管理とドキュメント更新フローの追加
+  - **common/WORKFLOW.md** 新規作成: 汎用ワークフロー定義
+  - **common/PHASE_MANAGEMENT.md** 新規作成: フェーズ管理ガイド
+  - **common/DOCUMENTATION_GUIDE.md** 新規作成: docs/ と Serenaメモリの2層管理
+  - **nissei/WORKFLOW.md** 更新: フェーズ管理とドキュメント更新フローを追加
+  - **CLAUDE.md** 更新: フェーズ管理フローとSerenaメモリ更新を明記
+  - README.md（このファイル）更新: 新規ガイドラインを反映
+
 - **2025-10-02 (3回目)**: 2層構造への分離
   - **common/** フォルダ作成: プロジェクト横断的な汎用ガイドライン
   - **nissei/** フォルダ作成: nissei プロジェクト固有の設定
@@ -237,7 +287,7 @@ WORKFLOW.md（nissei 専用）⭐ 最重要
   - 再利用性・保守性・明確な責任分離を実現
 
 - **2025-10-02 (2回目)**: ドキュメント管理ガイド追加
-  - **DOCUMENTATION_GUIDE.md** を新規作成
+  - **nissei/DOCUMENTATION_GUIDE.md** を新規作成
   - Serena vs docs の使い分けを明確化（AI詳細 vs 人間簡潔）
   - 追記・更新のフローを定義
 

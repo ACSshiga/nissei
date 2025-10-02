@@ -41,7 +41,7 @@
 
 ---
 
-## 1. 作業開始時（必須）
+## 1. セッション開始時（必須）
 
 ### 1.1 Serena メモリから状態を読み込み
 
@@ -58,10 +58,18 @@
    memory_file_name: "current_issues_and_priorities.md"
    → 現在の優先度を把握
 
-4. 作業開始
+4. mcp__serena__read_memory
+   memory_file_name: "phase_progress.md"  # フェーズ管理時
+   → 現在のフェーズ・進捗を確認
+
+5. フェーズ・仕様確認
+   - 現在のフェーズと実装内容を確認
+   - 不明点はユーザーに質問
+
+6. 作業開始
 ```
 
-詳細: [SETUP_AND_MCP.md](./SETUP_AND_MCP.md) の「Serena MCP」セクション
+詳細: [SETUP_AND_MCP.md](./SETUP_AND_MCP.md) の「Serena MCP」セクション、[../../common/PHASE_MANAGEMENT.md](../../common/PHASE_MANAGEMENT.md)
 
 ### 1.2 ブランチ作成
 
@@ -204,42 +212,71 @@ mcp__github__merge_pull_request
 
 ---
 
-## 6. docs/ ディレクトリの更新確認（マージ後必須）
+## 6. ドキュメント更新（マージ後必須）
 
-⚠️ **重要**: PR作成→レビュー→マージまでを1セットの作業として完了させる
+⚠️ **重要**: **PR作成→レビュー→マージ→ドキュメント更新までを1セットの作業として完了させる**
 
-### 6.1 確認が必要な変更
+### 6.1 更新対象
 
-- データベーススキーマ変更（テーブル追加・カラム変更など）
-- API エンドポイント追加・変更（リクエスト/レスポンス形式変更）
-- 環境変数の追加・変更
-- 新機能の追加（アーキテクチャへの影響）
-- 設定ファイルの変更
+#### 人間用ドキュメント（docs/）
+- **[docs/DATABASE.md](../../docs/DATABASE.md)**: データベーススキーマ定義
+- **[docs/API.md](../../docs/API.md)**: API エンドポイント仕様
+- **[docs/SETUP.md](../../docs/SETUP.md)**: 環境構築手順
+- **[docs/PHASES.md](../../docs/PHASES.md)**: フェーズ管理（フェーズ管理時）
 
-### 6.2 更新対象ドキュメント
+#### AI用詳細仕様（Serenaメモリ）
+- `.serena/memories/database_specifications.md` - DB詳細仕様
+- `.serena/memories/api_specifications.md` - API詳細仕様
+- `.serena/memories/phase_progress.md` - フェーズ進捗（フェーズ管理時）
+- `.serena/memories/current_issues_and_priorities.md` - Issue・優先度
 
-- **[docs/DATABASE.md](../docs/DATABASE.md)**: データベーススキーマ定義
-- **[docs/API.md](../docs/API.md)**: API エンドポイント仕様
-- **[docs/SETUP.md](../docs/SETUP.md)**: 環境構築手順
-- **[docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md)**: システムアーキテクチャ
+詳細: [../../common/DOCUMENTATION_GUIDE.md](../../common/DOCUMENTATION_GUIDE.md)
 
-### 6.3 更新フロー
+### 6.2 更新フロー
 
 ```bash
-# 1. 変更内容を確認し、docs/ 更新が必要か判断
-# 2. 必要な場合は新しいブランチを作成
+# mainブランチに切り替え
 git checkout main
 git pull
-git checkout -b docs-update-<内容>
 
-# 3. ドキュメントを更新
-# 4. コミット・push・PR作成
-# 5. code-reviewer サブエージェント レビュー → マージ（通常フロー）
+# 1. docs/ の更新
+# - API.md, DATABASE.md など該当ファイルを編集
+# - 簡潔に要点のみ更新
+
+# 2. Serenaメモリの更新
+mcp__serena__write_memory(
+  memory_name="api_specifications.md",  # 該当ファイル
+  content="[詳細な技術仕様]"
+)
+
+# 3. コミット＆プッシュ
+git add docs/ .serena/memories/
+git commit -m "docs: [機能名]の追加に伴いドキュメント更新"
+git push
 ```
 
 ---
 
-## 7. Issue作成（必要に応じて）
+## 7. フェーズ完了時（該当する場合）
+
+詳細: [../../common/PHASE_MANAGEMENT.md](../../common/PHASE_MANAGEMENT.md)
+
+### 7.1 完了チェックリスト
+- [ ] 全機能の実装完了
+- [ ] E2Eテスト完了
+- [ ] **仕様との整合性確認**（ユーザーと最終確認）
+- [ ] ドキュメント完全更新（docs/PHASES.md + Serenaメモリ）
+- [ ] 次フェーズの準備（必要に応じて）
+
+### 7.2 フェーズ移行手順
+1. ユーザーと仕様の最終確認
+2. docs/PHASES.md のステータスを「✅ 完了」に更新
+3. phase_progress.md に完了サマリを記載
+4. 次フェーズの仕様を確認してから開始
+
+---
+
+## 8. Issue作成（必要に応じて）
 
 詳細: [ISSUE_GUIDELINES.md](./ISSUE_GUIDELINES.md)
 
@@ -251,23 +288,29 @@ git checkout -b docs-update-<内容>
 
 ## 詳細ガイドライン
 
-各工程の詳細は以下のドキュメントを参照してください：
-
+### nissei 固有
 - **[SETUP_AND_MCP.md](./SETUP_AND_MCP.md)**: 環境構築・MCP設定
-- **[NAMING_CONVENTIONS.md](./NAMING_CONVENTIONS.md)**: 命名規則
 - **[TESTING.md](./TESTING.md)**: テストガイドライン
-- **[COMMIT_GUIDELINES.md](./COMMIT_GUIDELINES.md)**: コミットメッセージガイドライン
-- **[PR_AND_REVIEW.md](./PR_AND_REVIEW.md)**: PR作成・レビュー・マージプロセス（最重要）
+- **[PR_AND_REVIEW.md](./PR_AND_REVIEW.md)**: PR作成・レビュー・マージプロセス
 - **[ISSUE_GUIDELINES.md](./ISSUE_GUIDELINES.md)**: Issue作成ガイドライン
+- **[DOCUMENTATION_GUIDE.md](./DOCUMENTATION_GUIDE.md)**: nissei固有のドキュメント管理
+
+### 汎用（プロジェクト横断）
+- **[../../common/WORKFLOW.md](../../common/WORKFLOW.md)**: 汎用ワークフロー
+- **[../../common/PHASE_MANAGEMENT.md](../../common/PHASE_MANAGEMENT.md)**: フェーズ管理
+- **[../../common/DOCUMENTATION_GUIDE.md](../../common/DOCUMENTATION_GUIDE.md)**: ドキュメント管理
+- **[../../common/COMMIT_GUIDELINES.md](../../common/COMMIT_GUIDELINES.md)**: コミットメッセージガイドライン
+- **[../../common/NAMING_CONVENTIONS.md](../../common/NAMING_CONVENTIONS.md)**: 命名規則
 
 ---
 
 ## 注意事項
 
+- ⚠️ **セッション開始時にSerenaメモリから状況を把握**（phase_progress.md含む）
+- ⚠️ **フェーズ開始時に必ず仕様確認**
 - ⚠️ **mainブランチへの直接作業は絶対禁止**
 - ⚠️ **コミット前に必ず動作確認とE2Eテストを実施**
 - ⚠️ **PR作成直後に必ずcode-reviewer サブエージェント レビューを依頼**
 - ⚠️ **Critical問題が存在する場合は絶対にマージしない**
-- ⚠️ **PR作成→レビュー→マージまでを1セットの作業として完了させる**（PRを溜めない）
-- ⚠️ **マージ後は必ず docs/ の更新が必要か確認する**
-- ⚠️ **毎セッション開始時にSerenaメモリから状況を把握する**
+- ⚠️ **PR作成→レビュー→マージ→ドキュメント更新までを1セットの作業として完了**
+- ⚠️ **フェーズ完了時に必ず仕様との整合性確認**
