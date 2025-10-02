@@ -54,16 +54,13 @@ PUT    /api/worklogs/grid         差分パッチ更新
 ### 請求書 (Invoices)
 
 ```
-GET    /api/invoices/preview?month=YYYY-MM  請求プレビュー（工数自動集計）
-POST   /api/invoices/close?month=YYYY-MM    請求締め確定（管理者のみ）
-GET    /api/invoices/export?month=YYYY-MM   CSV出力（BOM付きUTF-8）
-GET    /api/invoices                        請求書一覧取得
-GET    /api/invoices/{id}                   請求書詳細取得
-PATCH  /api/invoices/{id}                   請求書更新（管理者のみ）
-DELETE /api/invoices/{id}                   請求書削除（管理者のみ）
+GET    /api/invoices/preview?year=YYYY&month=MM  請求プレビュー（工数自動集計）
+POST   /api/invoices/close?year=YYYY&month=MM    請求締め確定（管理者のみ）
+GET    /api/invoices/export?year=YYYY&month=MM   CSV出力（BOM付きUTF-8）
 ```
 
-**請求書番号形式**: `INV-YYYYMM-XXX`（例: INV-202510-001）
+**年月管理**: `year`と`month`パラメータで管理（UNIQUEキー）
+**ステータス**: `draft` | `closed`
 
 ### 資料管理 (Materials)
 
@@ -81,6 +78,27 @@ DELETE /api/materials/{id}             資料削除
 - `series`: シリーズ
 - `tonnage`: トン数
 
+### 注意点管理 (Chuiten)
+
+```
+GET    /api/chuiten/categories           カテゴリ一覧取得
+POST   /api/chuiten/categories           カテゴリ追加（管理者のみ）
+DELETE /api/chuiten/categories/{id}     カテゴリ削除（管理者のみ）
+
+GET    /api/chuiten                      注意点一覧取得
+POST   /api/chuiten                      注意点追加（管理者のみ）
+GET    /api/chuiten/{id}                 注意点詳細取得
+PATCH  /api/chuiten/{id}                 注意点更新（管理者のみ）
+DELETE /api/chuiten/{id}                 注意点削除（管理者のみ）
+
+GET    /api/chuiten/by-project/{project_id}  案件関連注意点取得
+```
+
+**検索パラメータ**:
+- `series`: 対象シリーズで絞り込み
+- `category_id`: カテゴリIDで絞り込み
+- `keyword`: キーワード検索（注意点内容）
+
 ### マスタ管理 (Masters)
 
 各マスタに対して同じCRUD操作が可能。
@@ -97,7 +115,6 @@ DELETE /api/masters/{type}/{id}   削除
 - `kishyu`: 機種
 - `nounyusaki`: 納入先
 - `shinchoku`: 進捗
-- `chuiten-category`: 注意点カテゴリ
 
 ### 管理者機能 (Admin)
 

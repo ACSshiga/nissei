@@ -60,20 +60,23 @@ work_content     - 作業内容（オプション）
 ### invoices（請求書）
 
 ```
-invoice_number   - 請求書番号（INV-YYYYMM-XXX形式、UNIQUE）
-issue_date       - 発行日
-total_amount     - 合計工数（Decimal 12,2）
-status           - ステータス（draft/sent/paid）
+year             - 年（YYYY）
+month            - 月（1-12）
+status           - ステータス（draft/closed）
+closed_at        - 確定日時
+closed_by        - 確定者ID
 ```
+
+**UNIQUE制約**: `(year, month)`
 
 ### invoice_items（請求書明細）
 
 ```
 invoice_id       - 請求書ID（外部キー）
-management_no    - 管理番号（プロジェクトから）
-machine_no       - 機番（プロジェクトから）
-actual_hours     - 実工数（Decimal 8,2）
-sort_order       - ソート順
+project_id       - 案件ID（外部キー）
+management_no    - 管理番号
+work_content     - 委託業務内容（機番）
+total_hours      - 実工数（Decimal）
 ```
 
 ### materials（資料）
@@ -93,6 +96,24 @@ file_path   - ファイルパス（Supabase Storage）
 2. `model`: 特定機種専用（例: NEX140Ⅲ-24AK専用）
 3. `tonnage`: トン数共通（例: 140トン全機種）
 4. `series`: シリーズ共通（例: NEXシリーズ全体）
+
+### master_chuiten（注意点マスタ）
+
+```
+seq_no               - 連番（UNIQUE）
+target_series        - 対象シリーズ（NEX等）
+target_model_pattern - 対象機種パターン
+category_id          - カテゴリID（外部キー）
+note                 - 注意点内容
+author               - 作成者
+remarks              - 備考
+```
+
+### master_chuiten_category（注意点カテゴリ）
+
+```
+name                 - カテゴリ名（使い方、組付、注意点等）
+```
 
 ## マイグレーション
 
