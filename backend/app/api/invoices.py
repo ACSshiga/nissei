@@ -21,6 +21,10 @@ from app.schemas.invoice import (
 
 router = APIRouter()
 
+# 定数定義
+INVOICE_STATUS_DRAFT = "draft"
+INVOICE_STATUS_CLOSED = "closed"
+
 
 @router.get("/preview", response_model=InvoicePreview)
 def preview_invoice(
@@ -104,7 +108,7 @@ def preview_invoice(
                 id=UUID("00000000-0000-0000-0000-000000000000"),
                 year=year,
                 month=month,
-                status="draft",
+                status=INVOICE_STATUS_DRAFT,
                 closed_at=None,
                 closed_by=None,
                 created_at=datetime.utcnow(),
@@ -146,12 +150,12 @@ def close_invoice(
         if existing.data:
             invoice_id = existing.data[0]["id"]
             # 確定済みの場合はエラー
-            if existing.data[0]["status"] == "closed":
+            if existing.data[0]["status"] == INVOICE_STATUS_CLOSED:
                 raise HTTPException(status_code=400, detail="既に確定済みの請求書です")
 
             # ステータスを確定に更新
             update_data = {
-                "status": "closed",
+                "status": INVOICE_STATUS_CLOSED,
                 "closed_at": datetime.utcnow().isoformat(),
                 "closed_by": str(current_user["id"]),
                 "updated_at": datetime.utcnow().isoformat()
@@ -165,7 +169,7 @@ def close_invoice(
             invoice_data = {
                 "year": year,
                 "month": month,
-                "status": "closed",
+                "status": INVOICE_STATUS_CLOSED,
                 "closed_at": datetime.utcnow().isoformat(),
                 "closed_by": str(current_user["id"])
             }
