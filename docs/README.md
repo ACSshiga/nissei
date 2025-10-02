@@ -83,10 +83,14 @@ nissei/
 - `.serena/memories/database_specifications.md` - DB詳細仕様
 - `.serena/memories/current_issues_and_priorities.md` - 現在の課題・優先度
 
-### 参考資料（CSV）
-- `テストシート.csv` - 案件管理の初期サンプルデータ
-- `資料作成注意点一覧.csv` - 注意点マスタの参考データ
-- `請求書.csv` - 請求書フォーマットの参考
+### 参考資料
+
+プロジェクト関連の参考資料（CSV、Excel、PDF等）は [`reference/`](../reference/) ディレクトリに配置されています。
+
+- `reference/テストシート.csv` - 案件管理の初期サンプルデータ
+- `reference/資料作成注意点一覧.csv` - 注意点マスタの参考データ
+- `reference/請求書.csv` - 請求書フォーマットの参考
+- `reference/2025-9-22.pdf` - 委託書サンプル
 
 ## ライセンス
 

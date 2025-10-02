@@ -211,6 +211,41 @@ git push origin main
 - フェーズ計画・履歴
 - 技術的負債の記録
 
+### 4. 参考資料の管理（CSV, Excel, PDF等）
+
+**配置ルール**:
+- `docs/`: ドキュメント（Markdown）のみ配置
+- `reference/`: 参考資料（CSV, Excel, PDF等）を配置
+  - ユーザーが手動でアップロード
+  - AI/開発者は参照のみ
+
+**docs/ に参考資料がある場合の対応**:
+1. `reference/` ディレクトリが存在するか確認
+2. ファイルを `docs/` → `reference/` に移動
+3. `docs/README.md` で参考資料の場所を案内
+
+**移動コマンド例**:
+```bash
+# 参考資料を docs/ から reference/ に移動
+mv docs/*.csv reference/
+mv docs/*.xlsx reference/
+mv docs/*.pdf reference/
+
+# README.md に参考資料の説明を追加
+echo "参考資料は reference/ ディレクトリを参照してください" >> docs/README.md
+```
+
+**README.md への記載例**:
+```markdown
+## 参考資料
+
+プロジェクト関連の参考資料（CSV、Excel、PDF等）は [`reference/`](../reference/) ディレクトリに配置されています。
+
+- `reference/sample_data.csv` - サンプルデータ
+- `reference/specification.xlsx` - 仕様書
+- `reference/design_doc.pdf` - 設計資料
+```
+
 ## トラブルシューティング
 
 ### 重複が多すぎる場合
