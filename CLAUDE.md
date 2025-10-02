@@ -25,33 +25,31 @@
 
 ## 開発ワークフロー
 
-詳細は [ai-rules/WORKFLOW.md](./ai-rules/WORKFLOW.md) を参照。
+詳細は [ai-rules/nissei/WORKFLOW.md](./ai-rules/nissei/WORKFLOW.md) を参照。
 
 ### 作業開始時
 1. 専用ブランチを作成（`feat-*`, `fix-*`, `docs-*` 等）
 2. mainブランチでの直接作業は絶対禁止
 
 ### 作業終了時
-1. 変更をコミット（[コミット規約](./ai-rules/COMMIT_GUIDELINES.md)に従う）
+1. 変更をコミット（[コミット規約](./ai-rules/common/COMMIT_GUIDELINES.md)に従う）
 2. リモートブランチにpush
-3. PRを作成（[PR規約](./ai-rules/PR_GUIDELINES.md)に従う）
-4. **必須**: code-reviewer サブエージェントでレビューを依頼（[PRマージプロセス](./ai-rules/PR_MERGE_PROCESS.md)参照）
+3. PRを作成（[PR規約](./ai-rules/nissei/PR_AND_REVIEW.md)に従う）
+4. **必須**: code-reviewer サブエージェントでレビューを依頼
 5. レビュー完了後にmainへマージ
 6. **必須**: マージ後に docs/ の更新が必要か確認・更新
 
 ⚠️ **重要**: **PR作成→レビュー→マージまでを1セットの作業として完了させる**
-- PRが溜まると干渉したり競合の原因になるため、必ずマージまで完了させる
-- マージ後は必ず docs/ の更新が必要か確認する（詳細は [WORKFLOW.md](./ai-rules/WORKFLOW.md) 参照）
 
 ## コミット前の必須確認
 
 - 動作確認を実施
-- E2Eテストを実施（[テストガイド](./ai-rules/TESTING.md)）
+- E2Eテストを実施（[テストガイド](./ai-rules/nissei/TESTING.md)）
 - エラーがない状態でコミット
 
 ## 命名規則
 
-詳細は [ai-rules/NAMING_CONVENTIONS.md](./ai-rules/NAMING_CONVENTIONS.md) を参照。
+詳細は [ai-rules/common/NAMING_CONVENTIONS.md](./ai-rules/common/NAMING_CONVENTIONS.md) を参照。
 
 ### 主要ルール
 - **TypeScript/JavaScript**: camelCase（変数・関数）、PascalCase（クラス・型）
@@ -62,7 +60,7 @@
 
 ## テスト
 
-詳細は [ai-rules/TESTING.md](./ai-rules/TESTING.md) を参照。
+詳細は [ai-rules/nissei/TESTING.md](./ai-rules/nissei/TESTING.md) を参照。
 
 ### テストユーザー情報
 ```
@@ -78,7 +76,7 @@ User ID: 00000000-0000-4000-8000-000000000000
 
 ## コードレビュー
 
-詳細は [ai-rules/PR_MERGE_PROCESS.md](./ai-rules/PR_MERGE_PROCESS.md) を参照。
+詳細は [ai-rules/nissei/PR_AND_REVIEW.md](./ai-rules/nissei/PR_AND_REVIEW.md) を参照。
 
 ### レビュー方法（必須）
 1. PR作成直後に **code-reviewer サブエージェント**でレビュー依頼（自動または明示的）
@@ -88,22 +86,48 @@ User ID: 00000000-0000-4000-8000-000000000000
 
 **サブエージェント設定**: `.claude/agents/code-reviewer.md` に定義
 
-参考: [CODE_REVIEW.md](./ai-rules/CODE_REVIEW.md)（レビュー観点チェックリスト）
-
 ## MCPサーバー
 
-詳細は [ai-rules/MCP_USAGE.md](./ai-rules/MCP_USAGE.md) を参照。
+詳細は [ai-rules/nissei/SETUP_AND_MCP.md](./ai-rules/nissei/SETUP_AND_MCP.md) を参照。
 
 ### 利用可能なMCP
 - **context7**: RAG/検索支援
 - **playwright**: E2Eテスト自動化
 - **github**: Issue/PR操作
 - **desktop-commander**: ローカルPC操作
-- **serena**: 高度な自動化
+- **serena**: コードベース解析・メモリ管理（**推奨**）
 - **supabase**: DB/認証/ストレージ連携
 
 ### カスタムサブエージェント
 - **code-reviewer** (`.claude/agents/code-reviewer.md`): PRレビュー専門エージェント
+
+## Serena MCP活用（重要）
+
+**最重要**: 毎セッション開始時にSerenaメモリから状況を把握すること。
+
+### セッション開始時の必須フロー
+```
+1. mcp__serena__activate_project
+2. mcp__serena__list_memories
+3. mcp__serena__read_memory("current_issues_and_priorities.md")
+4. 作業開始
+```
+
+### 主要メモリファイル
+- `current_issues_and_priorities.md` - 現在のIssue・優先度（**最重要**）
+- `project_overview.md` - プロジェクト概要
+- `database_specifications.md` - DB詳細仕様
+- `api_specifications.md` - API詳細仕様
+- その他3個（詳細は [ai-rules/nissei/DOCUMENTATION_GUIDE.md](./ai-rules/nissei/DOCUMENTATION_GUIDE.md)）
+
+### いつSerenaを使うか
+- ✅ セッション開始時（メモリ読み込み）
+- ✅ プロジェクト全体把握
+- ✅ 複数ファイルにまたがる変更
+- ✅ 影響範囲調査
+- ❌ 1-2個のファイルの簡単な編集（通常ツールで十分）
+
+詳細: [ai-rules/nissei/SETUP_AND_MCP.md](./ai-rules/nissei/SETUP_AND_MCP.md)
 
 ## Context7利用
 
@@ -117,11 +141,12 @@ use context7 — [質問内容]
 
 以下は `docs/` ディレクトリを参照：
 
+- [プロジェクト概要](./docs/README.md)
 - [環境構築手順](./docs/SETUP.md)
-- [システムアーキテクチャ](./docs/ARCHITECTURE.md)
-- [API仕様](./docs/API.md)
-- [データベース設計](./docs/DATABASE.md)
-- [要件定義](./docs/requirements-definition.md)
+- [API仕様（簡潔版）](./docs/API.md)
+- [データベース設計（簡潔版）](./docs/DATABASE.md)
+
+詳細な技術仕様は `.serena/memories/` を参照（[ドキュメント管理ガイド](./ai-rules/nissei/DOCUMENTATION_GUIDE.md)）
 
 ## ファイル構造
 
@@ -129,31 +154,19 @@ use context7 — [質問内容]
 nissei/
 ├── CLAUDE.md              # このファイル（AI用設定）
 ├── README.md              # プロジェクト概要（人間用）
-├── .claude/               # Claude Code設定
-│   └── agents/            # カスタムサブエージェント
-│       └── code-reviewer.md  # PRレビュー専門エージェント
-├── ai-rules/              # AI用汎用ルール
-│   ├── README.md          # ドキュメント構成の説明
-│   ├── WORKFLOW.md        # 開発ワークフロー全体
-│   ├── PR_MERGE_PROCESS.md # PRレビュー・マージプロセス
-│   ├── PR_GUIDELINES.md   # PR作成ガイドライン
-│   ├── CODE_REVIEW.md     # コードレビューチェックリスト
-│   ├── COMMIT_GUIDELINES.md # コミットメッセージガイドライン
-│   ├── ISSUE_GUIDELINES.md # Issue作成ガイドライン
-│   ├── TESTING.md         # テストガイドライン
-│   ├── NAMING_CONVENTIONS.md # 命名規則
-│   └── MCP_USAGE.md       # MCP サーバー運用ガイド
-├── docs/                  # プロジェクト固有情報
-│   ├── PR_REVIEW_HISTORY.md # PRレビュー履歴
-│   ├── SETUP.md
-│   ├── ARCHITECTURE.md
-│   ├── API.md
-│   ├── DATABASE.md
-│   └── requirements-definition.md
+├── .claude/agents/        # カスタムサブエージェント
+├── ai-rules/              # AI用開発ガイドライン（2層構造）
+│   ├── common/            # プロジェクト横断（汎用）
+│   └── nissei/            # nissei 専用
+├── docs/                  # 人間用ドキュメント（簡潔版）
+├── .serena/memories/      # AI用詳細仕様（Serenaメモリ）
+├── reference/             # 参考資料（PDF・Excel等）
 ├── frontend/              # Next.jsアプリ
 ├── backend/               # FastAPIアプリ
 └── docker-compose.yml
 ```
+
+詳細なディレクトリ構造: [ai-rules/README.md](./ai-rules/README.md)
 
 ## 注意事項
 
