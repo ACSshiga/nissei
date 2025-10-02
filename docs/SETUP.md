@@ -113,18 +113,31 @@ kill -9 <PID>
 
 ## データベースセットアップ
 
-### マイグレーション実行
+### Supabase マイグレーション
+
+**Supabase MCPツール**を使用してマイグレーションを実行:
 
 ```bash
-cd backend
-alembic upgrade head
+# マイグレーション一覧確認
+mcp__supabase__list_migrations
+
+# マイグレーション適用（例: 初期テーブル作成）
+mcp__supabase__apply_migration \
+  --name="create_initial_tables" \
+  --query="CREATE TABLE users (...);"
 ```
+
+または **Supabase Dashboard** から直接SQL実行:
+1. https://supabase.com/dashboard/project/wwyrthkizkcgndyorcww/editor にアクセス
+2. SQL Editorで [DATABASE.md](./DATABASE.md) の CREATE TABLE文を実行
 
 ### 初期データ投入
 
-⚠️ **注意**: 初期データ投入スクリプトは現在未実装です。
-テストユーザーは以下の情報を使用してください：
+**マスタデータ**は [DATABASE.md](./DATABASE.md) の初期データSQLを参照:
+- `master_work_category` - 作業区分（盤配/線加工）
+- `master_chuiten_category` - 注意点カテゴリ（A板/B板/C板等）
 
+**テストユーザー**（Supabase Auth登録済み）:
 ```
 Email: qa+shared@example.com
 Password: SharedDev!2345
