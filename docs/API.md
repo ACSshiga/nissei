@@ -227,6 +227,8 @@ Content-Type: application/json
       "user_id": "uuid",
       "work_date": "2025-01-01",
       "duration_minutes": 480,
+      "start_time": "09:00:00",
+      "end_time": "17:00:00",
       "work_content": "作業内容",
       "created_at": "2025-01-01T00:00:00Z",
       "updated_at": "2025-01-01T00:00:00Z"
@@ -247,13 +249,15 @@ Content-Type: application/json
   "project_id": "uuid",
   "work_date": "2025-01-01",
   "duration_minutes": 480,
+  "start_time": "09:00:00",
+  "end_time": "17:00:00",
   "work_content": "作業内容の説明"
 }
 ```
 
 **注意**:
 - `duration_minutes` は15分刻みでの入力を推奨（15, 30, 45, 60, ...）
-- 開始時刻・終了時刻は不要（duration_minutesのみで記録）
+- `start_time`, `end_time`, `work_content` はオプション（duration_minutesは必須）
 
 **レスポンス (201 Created)**
 ```json
@@ -263,8 +267,11 @@ Content-Type: application/json
   "user_id": "uuid",
   "work_date": "2025-01-01",
   "duration_minutes": 480,
+  "start_time": "09:00:00",
+  "end_time": "17:00:00",
   "work_content": "作業内容の説明",
-  "created_at": "2025-01-01T00:00:00Z"
+  "created_at": "2025-01-01T00:00:00Z",
+  "updated_at": "2025-01-01T00:00:00Z"
 }
 ```
 
@@ -279,6 +286,8 @@ Content-Type: application/json
   "user_id": "uuid",
   "work_date": "2025-01-01",
   "duration_minutes": 480,
+  "start_time": "09:00:00",
+  "end_time": "17:00:00",
   "work_content": "作業内容",
   "created_at": "2025-01-01T00:00:00Z",
   "updated_at": "2025-01-01T00:00:00Z"
@@ -294,6 +303,8 @@ Content-Type: application/json
   "project_id": "uuid",
   "work_date": "2025-01-02",
   "duration_minutes": 240,
+  "start_time": "10:00:00",
+  "end_time": "14:00:00",
   "work_content": "更新後の作業内容"
 }
 ```
@@ -306,7 +317,10 @@ Content-Type: application/json
   "user_id": "uuid",
   "work_date": "2025-01-02",
   "duration_minutes": 240,
+  "start_time": "10:00:00",
+  "end_time": "14:00:00",
   "work_content": "更新後の作業内容",
+  "created_at": "2025-01-01T00:00:00Z",
   "updated_at": "2025-01-02T00:00:00Z"
 }
 ```
