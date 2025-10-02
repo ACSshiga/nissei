@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api import auth, projects, worklogs, invoices, materials, checklists, masters, admin
+from app.api import auth, projects, worklogs, invoices, materials, chuiten, masters, admin
 
 # Supabase Clientを使用するため、テーブル作成は不要（Supabase側で管理）
 
@@ -31,6 +31,6 @@ app.include_router(projects.router, tags=["案件管理"])
 app.include_router(worklogs.router, prefix="/api/worklogs", tags=["工数入力"])
 app.include_router(invoices.router, prefix="/api/invoices", tags=["請求"])
 app.include_router(materials.router, prefix="/api/materials", tags=["資料"])
-app.include_router(checklists.router, prefix="/api/checklists", tags=["注意点"])
+app.include_router(chuiten.router, prefix="/api/chuiten", tags=["注意点"])
 app.include_router(masters.router, tags=["マスタ"])
 app.include_router(admin.router, prefix="/api/admin", tags=["管理者"])

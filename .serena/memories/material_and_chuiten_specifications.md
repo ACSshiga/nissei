@@ -1,6 +1,7 @@
 # 資料管理・注意点リスト仕様（2025-10-02確定）
 
 **最終更新**: 2025-10-02
+**バージョン**: v2.0
 
 ## 📚 資料管理システム
 
@@ -48,22 +49,30 @@
 ```sql
 CREATE TABLE materials (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  title VARCHAR(200) NOT NULL,                  -- タイトル
-  machine_no VARCHAR(100),                      -- 案件固有の場合のみ
-  model VARCHAR(100),                           -- 機種: NEX140Ⅲ
-  scope VARCHAR(20) NOT NULL,                   -- 'machine' | 'model' | 'tonnage' | 'series'
+  title VARCHAR(200) NOT NULL,
+  machine_no VARCHAR(100),
+  model VARCHAR(100),
+  scope VARCHAR(20) NOT NULL,
   series VARCHAR(50) NOT NULL,
   tonnage INTEGER,
-  file_path VARCHAR(500) NOT NULL,              -- Supabase Storage内のパス
+  file_path VARCHAR(500) NOT NULL,
   file_size BIGINT,
-  uploaded_by UUID REFERENCES users(id),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  uploaded_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
-CREATE INDEX idx_materials_scope_series ON materials(scope, series);
-CREATE INDEX idx_materials_machine_no ON materials(machine_no) WHERE machine_no IS NOT NULL;
-CREATE INDEX idx_materials_model ON materials(model) WHERE model IS NOT NULL;
+CREATE INDEX idx_materials_scope ON materials(scope);
+CREATE INDEX idx_materials_machine_no ON materials(machine_no);
+CREATE INDEX idx_materials_model ON materials(model);
+CREATE INDEX idx_materials_series_tonnage ON materials(series, tonnage);
 ```
+
+**COMMENT**:
+- `scope`: スコープレベル: machine, model, tonnage, series
+- `machine_no`: 特定機番（scope=machineの場合）
+- `model`: 特定機種（scope=modelの場合）
+- `series`: シリーズ名（NEX, HMX等）
+- `tonnage`: トン数（scope=tonnageの場合）
 
 **重要**: 資料カテゴリ（A板、B板、シーケンサ等）は不要。注意点リストにのみカテゴリが必要。
 
@@ -197,7 +206,7 @@ INSERT INTO master_chuiten_category (name, sort_order) VALUES
 ```sql
 CREATE TABLE master_chuiten (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  seq_no INTEGER UNIQUE NOT NULL,               -- 連番 (1, 2, 3...)
+  seq_no INTEGER UNIQUE NOT NULL,               -- 連番 (1, 2, 3...) ⚠️ UNIQUE制約
   target_series VARCHAR(100),                   -- 対象シリーズ: 'TNX', 'FNX', etc
   target_model_pattern VARCHAR(100),            -- 対象機種パターン: 'TC15～', 'NEX30'
   category_id UUID REFERENCES master_chuiten_category(id),
@@ -211,6 +220,10 @@ CREATE TABLE master_chuiten (
 CREATE INDEX idx_chuiten_series ON master_chuiten(target_series);
 CREATE INDEX idx_chuiten_category ON master_chuiten(category_id);
 ```
+
+**注意**: 
+- `seq_no`にUNIQUE制約があるため、連番変更時は重複に注意
+- PATCH更新でseq_noを変更可能（重複チェックあり）
 
 ---
 
@@ -252,6 +265,10 @@ CREATE INDEX idx_chuiten_category ON master_chuiten(category_id);
 #### 2. 案件詳細の注意点タブ
 
 **機能**: 案件の機種に関連する注意点を自動表示
+
+**シリーズ抽出ロジック**: 
+- 案件の機種（model）から正規表現で先頭の英字部分を抽出
+- 例: `NEX140Ⅲ-24AK` → `NEX`
 
 ```
 案件詳細 > TC1025006 TNX100RⅢ18V
@@ -351,30 +368,55 @@ ALTER TABLE projects ADD COLUMN delay_reason TEXT;                -- 係り超�
 
 ## 📜 請求書仕様
 
+### 年月管理
+
+**UNIQUE制約**: `(year, month)` で請求書を管理
+
+```sql
+CREATE TABLE invoices (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  year INTEGER NOT NULL,
+  month INTEGER NOT NULL CHECK (month BETWEEN 1 AND 12),
+  status VARCHAR(20) DEFAULT 'draft' NOT NULL,
+  closed_at TIMESTAMP,
+  closed_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  UNIQUE(year, month)
+);
+```
+
+**ステータス**: `draft` | `closed`
+
+---
+
 ### 出力項目（確定）
 
+CSV形式（BOM付きUTF-8）:
 - 管理No
 - 委託業務内容（機番）
 - 実工数（時間）
 
 **それ以外の項目は不要**（納入先、作業区分、担当者等は含まない）
 
+**工数集計**: `work_logs`テーブルから指定年月の工数を自動集計（プロジェクト別）
+
 ---
 
 ## 🔧 実装優先順位
 
-### Phase 1: 基盤
-1. マスタ管理画面（進捗、作業区分、注意点カテゴリ、機種マスタ）
-2. 全体管理画面（案件一覧）
-3. 工数入力グリッド
+### Phase 1: 基盤（✅ 完了）
+1. ✅ マスタ管理画面（進捗、作業区分、注意点カテゴリ、機種マスタ）
+2. ✅ 全体管理画面（案件一覧）
+3. ✅ 工数入力グリッド
+4. ✅ 資料管理機能（Supabase Storage連携）
+5. ✅ 注意点リスト機能
+6. ✅ 請求書生成
 
-### Phase 2: 資料・注意点
-4. 資料管理機能（Supabase Storage連携）
-5. 注意点リスト機能
-
-### Phase 3: PDF・請求書
-6. PDF自動取り込み
-7. 請求書生成
+### Phase 2: フロントエンド実装・品質向上（🟡 次フェーズ）
+7. フロントエンド画面実装
+8. PDF自動取り込み
+9. E2Eテスト・品質改善
 
 ---
 
@@ -384,3 +426,4 @@ ALTER TABLE projects ADD COLUMN delay_reason TEXT;                -- 係り超�
 - **ベースコード（参考資料）の記録機能**: 不要（削除）
 - **チェックリスト機能**: 削除（注意点リストのみ実装）
 - **資料カテゴリ**: 不要（注意点リストにのみカテゴリが必要）
+- **シリーズ抽出**: 正規表現 `^([A-Za-z]+)` で機種名から自動抽出

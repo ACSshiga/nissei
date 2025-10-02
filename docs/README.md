@@ -63,16 +63,30 @@
 nissei/
 ├── frontend/          # Next.jsアプリ
 ├── backend/           # FastAPIアプリ
-├── docs/              # ドキュメント
-├── reference/         # 参考資料
+├── docs/              # ドキュメント（人間用・簡潔版）
+│   ├── *.csv          # 参考資料（開発初期のサンプルデータ）
+│   └── *.md           # API・DB仕様書
+├── .serena/memories/  # AI用詳細仕様
+├── reference/         # PDF・Excel等の参考資料
 └── docker-compose.yml
 ```
 
 ## ドキュメント
 
+### 人間用（簡潔版）
 - [環境構築手順](./SETUP.md)
 - [データベース設計](./DATABASE.md)
 - [API仕様](./API.md)
+
+### AI用（詳細版）
+- `.serena/memories/api_specifications.md` - API詳細仕様
+- `.serena/memories/database_specifications.md` - DB詳細仕様
+- `.serena/memories/current_issues_and_priorities.md` - 現在の課題・優先度
+
+### 参考資料（CSV）
+- `テストシート.csv` - 案件管理の初期サンプルデータ
+- `資料作成注意点一覧.csv` - 注意点マスタの参考データ
+- `請求書.csv` - 請求書フォーマットの参考
 
 ## ライセンス
 

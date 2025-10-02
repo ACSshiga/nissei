@@ -1,7 +1,7 @@
 # データベース設計仕様
 
-**最終更新**: 2025-10-02
-**バージョン**: v2.0
+**最終更新**: 2025-10-02（Phase 1完了時）
+**バージョン**: v3.0
 
 ## データベース構成
 
@@ -19,7 +19,7 @@
 2. **projects** - 案件管理（製造業特化型）
 3. **work_logs** - 工数入力（15分刻み）
 4. **materials** - 資料管理（スコープベース共有）
-5. **invoices** - 請求書ヘッダ
+5. **invoices** - 請求書ヘッダ（年月管理）
 6. **invoice_items** - 請求書明細
 
 ### マスタテーブル（6つ）
@@ -205,27 +205,36 @@ HMX7-CN2 → NEX140Ⅲ-24AK → 140トン → NEXシリーズ
 
 ### 5. invoices（請求書）
 
-CSV出力用、月締め請求書。
+**年月管理方式**、CSV出力対応。
 
 ```sql
 CREATE TABLE invoices (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  invoice_number VARCHAR(50) UNIQUE NOT NULL,
-  issue_date DATE NOT NULL,
-  total_amount DECIMAL(12,2) DEFAULT 0.00 NOT NULL,
-  status VARCHAR(50) DEFAULT 'draft' NOT NULL,
+  year INTEGER NOT NULL,
+  month INTEGER NOT NULL CHECK (month BETWEEN 1 AND 12),
+  status VARCHAR(20) DEFAULT 'draft' NOT NULL,
+  closed_at TIMESTAMP,
+  closed_by UUID REFERENCES users(id) ON DELETE SET NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  UNIQUE(year, month)
 );
 
-CREATE UNIQUE INDEX idx_invoices_number ON invoices(invoice_number);
+CREATE UNIQUE INDEX idx_invoices_year_month ON invoices(year, month);
 CREATE INDEX idx_invoices_status ON invoices(status);
 ```
 
+**UNIQUE制約**: `(year, month)` - 年月の組み合わせで一意
+
 **status値**:
 - `draft`: 下書き（編集可能）
-- `sent`: 送信済み（確定）
-- `paid`: 入金済み
+- `closed`: 確定済み（編集不可）
+
+**フィールド説明**:
+- `year`: 年（YYYY形式、例: 2025）
+- `month`: 月（1〜12）
+- `closed_at`: 確定日時
+- `closed_by`: 確定者ID（管理者）
 
 ---
 
@@ -237,18 +246,18 @@ CSV出力形式対応。
 CREATE TABLE invoice_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   invoice_id UUID REFERENCES invoices(id) ON DELETE CASCADE NOT NULL,
+  project_id UUID REFERENCES projects(id) ON DELETE SET NULL NOT NULL,
   management_no VARCHAR(50) NOT NULL,
-  machine_no VARCHAR(100) NOT NULL,
-  actual_hours DECIMAL(10,2) NOT NULL,
-  sort_order INTEGER DEFAULT 0 NOT NULL,
+  work_content VARCHAR(200) NOT NULL,
+  total_hours DECIMAL(10,2) NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 CREATE INDEX idx_invoice_items_invoice ON invoice_items(invoice_id);
-CREATE INDEX idx_invoice_items_sort ON invoice_items(sort_order);
+CREATE INDEX idx_invoice_items_project ON invoice_items(project_id);
 ```
 
-**CSV出力形式**:
+**CSV出力形式（BOM付きUTF-8）**:
 ```csv
 管理No,委託業務内容,実工数
 E25A001,HMX7-CN2,5.75H
@@ -257,8 +266,8 @@ E25A002,STX10S2VS1,3.25H
 
 **フィールド対応**:
 - 管理No → `management_no`
-- 委託業務内容 → `machine_no`
-- 実工数 → `actual_hours` + "H"（例: 5.75H）
+- 委託業務内容 → `work_content`（機番を格納）
+- 実工数 → `total_hours` + "H"（例: 5.75H）
 
 ---
 
@@ -353,17 +362,19 @@ CREATE TABLE master_chuiten_category (
 
 CREATE INDEX idx_master_chuiten_category_sort ON master_chuiten_category(sort_order);
 
--- 初期データ例
+-- 初期データ（11カテゴリ）
 INSERT INTO master_chuiten_category (name, sort_order) VALUES
-  ('A板', 1),
-  ('B板', 2),
-  ('C板', 3),
-  ('D板', 4),
-  ('シーケンサ', 5),
-  ('アンプBOX', 6),
-  ('制御BOXカバーA', 7),
-  ('回路図', 8),
-  ('端子台', 9);
+  ('使い方', 1),
+  ('基板・配線', 2),
+  ('調整', 3),
+  ('ラベル・銘板', 4),
+  ('ケーブル', 5),
+  ('組付', 6),
+  ('端子台', 7),
+  ('架台取付', 8),
+  ('外形寸法', 9),
+  ('写真', 10),
+  ('注意点', 11);
 ```
 
 ---
@@ -373,19 +384,29 @@ INSERT INTO master_chuiten_category (name, sort_order) VALUES
 ```sql
 CREATE TABLE master_chuiten (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  category_id UUID REFERENCES master_chuiten_category(id) ON DELETE SET NULL,
+  seq_no INTEGER UNIQUE NOT NULL,
   target_series VARCHAR(100),
-  target_board VARCHAR(100),
-  content TEXT NOT NULL,
+  target_model_pattern VARCHAR(100),
+  category_id UUID REFERENCES master_chuiten_category(id) ON DELETE SET NULL,
+  note TEXT NOT NULL,
   author VARCHAR(100),
-  notes TEXT,
+  remarks TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 CREATE INDEX idx_master_chuiten_category ON master_chuiten(category_id);
 CREATE INDEX idx_master_chuiten_target_series ON master_chuiten(target_series);
+CREATE UNIQUE INDEX idx_master_chuiten_seq_no ON master_chuiten(seq_no);
 ```
+
+**フィールド説明**:
+- `seq_no`: 連番（1, 2, 3...、ユニーク）
+- `target_series`: 対象シリーズ（NEX、TNX等）
+- `target_model_pattern`: 対象機種パターン（TC15〜等）
+- `note`: 注意点・留意点内容
+- `author`: 記入者
+- `remarks`: 備考
 
 **設計思想**: チェックリストではなく注意点リスト。マスター化可能な柔軟な設計。
 
@@ -418,7 +439,8 @@ CREATE INDEX idx_master_chuiten_target_series ON master_chuiten(target_series);
 - `projects.assignee_id`, `progress_id`, `deadline`
 - `work_logs.project_id`, `user_id`, `work_date`
 - `materials.scope`, `series`, `tonnage`
-- `invoices.invoice_number` (UNIQUE)
+- `invoices.(year, month)` (UNIQUE複合)
+- `master_chuiten.seq_no` (UNIQUE)
 
 **外部キー自動インデックス**:
 - PostgreSQLでは外部キーに自動的にインデックスは作成されないため、明示的に作成
@@ -451,6 +473,7 @@ projects = db.table("projects").select("""
 - `projects` → `users`: `ON DELETE SET NULL`（担当者削除時、案件は残す）
 - `work_logs` → `projects`: `ON DELETE CASCADE`（案件削除時、工数も削除）
 - `invoice_items` → `invoices`: `ON DELETE CASCADE`（請求書削除時、明細も削除）
+- `invoice_items` → `projects`: `ON DELETE SET NULL`（案件削除時、明細は残す）
 
 ### NOT NULL制約
 
@@ -458,13 +481,16 @@ projects = db.table("projects").select("""
 - `projects.management_no`, `machine_no`, `model`
 - `work_logs.project_id`, `user_id`, `work_date`, `duration_minutes`
 - `materials.title`, `scope`, `series`, `file_path`
+- `invoices.year`, `month`, `status`
+- `master_chuiten.seq_no`, `note`
 
 ### UNIQUE制約
 
 **一意性保証**:
 - `users.email`
 - `projects.management_no`
-- `invoices.invoice_number`
+- `invoices.(year, month)`（複合ユニーク）
+- `master_chuiten.seq_no`
 
 ---
 
@@ -472,4 +498,5 @@ projects = db.table("projects").select("""
 
 - API仕様: `.serena/memories/api_specifications.md`
 - 実装状況: `.serena/memories/implementation_status.md`
-- 要件定義: `docs/requirements-definition.md`（人間用簡潔版）
+- 資料・注意点仕様: `.serena/memories/material_and_chuiten_specifications.md`
+- 人間用簡潔版: `docs/DATABASE.md`

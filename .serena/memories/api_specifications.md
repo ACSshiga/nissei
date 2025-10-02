@@ -1,7 +1,7 @@
 # API仕様書
 
 **最終更新**: 2025-10-02
-**バージョン**: v2.0
+**バージョン**: v3.0
 
 ## ベースURL
 
@@ -218,65 +218,105 @@ Content-Type: application/json
 
 | Method | Path | 説明 |
 |--------|------|------|
-| **GET** | **/api/invoices?month=YYYY-MM** | **請求プレビュー** |
-| **POST** | **/api/invoices/close** | **請求締め確定** |
-| **GET** | **/api/invoices/export?month=YYYY-MM** | **CSV出力** |
+| **GET** | **/api/invoices/preview?year=YYYY&month=MM** | **請求プレビュー** |
+| **POST** | **/api/invoices/close?year=YYYY&month=MM** | **請求締め確定（管理者のみ）** |
+| **GET** | **/api/invoices/export?year=YYYY&month=MM** | **CSV出力** |
+| **GET** | **/api/invoices** | **請求書一覧取得** |
+| **DELETE** | **/api/invoices/{invoice_id}** | **請求書削除（管理者のみ）** |
 
-**GET /api/invoices?month=YYYY-MM**
+**年月管理**: `year`と`month`パラメータで管理（UNIQUE制約: `(year, month)`）
+**ステータス**: `draft` | `closed`
 
-請求書プレビュー（締め前）。
+**GET /api/invoices/preview?year=YYYY&month=MM**
+
+指定月の請求書プレビュー（work_logsから実工数を自動集計）。
 
 ```json
 // Response (200)
 {
-  "month": "2025-01",
+  "id": "uuid",  // 既存の請求書があればそのID、なければダミー
+  "year": 2025,
+  "month": 1,
+  "status": "draft",
+  "closed_at": null,
+  "closed_by": null,
+  "created_at": "2025-01-01T00:00:00Z",
+  "updated_at": "2025-01-01T00:00:00Z",
   "items": [
     {
+      "id": "uuid",
+      "invoice_id": "uuid",
+      "project_id": "uuid",
       "management_no": "E252019",
-      "machine_no": "HMX7-CN2",
-      "actual_hours": 5.75,
-      "formatted_hours": "5.75H"
+      "work_content": "HMX7-CN2",
+      "total_hours": 5.75,
+      "created_at": "2025-01-01T00:00:00Z"
     }
-  ],
-  "total_hours": 120.5
+  ]
 }
 ```
 
-**POST /api/invoices/close**
+**POST /api/invoices/close?year=YYYY&month=MM**
 
-請求締め確定（invoices + invoice_items作成）。
+請求書を確定（管理者のみ）。work_logsから工数集計し、invoices + invoice_items作成。
 
 ```json
-// Request
+// Response (200)
 {
-  "month": "2025-01"
-}
-
-// Response (201)
-{
-  "invoice": {
-    "id": "uuid",
-    "invoice_number": "INV-2025-01",
-    "issue_date": "2025-02-01",
-    "total_amount": 0.00,
-    "status": "sent",
-    "items_count": 15
-  }
+  "id": "uuid",
+  "year": 2025,
+  "month": 1,
+  "status": "closed",
+  "closed_at": "2025-02-01T00:00:00Z",
+  "closed_by": "uuid",
+  "created_at": "2025-01-01T00:00:00Z",
+  "updated_at": "2025-02-01T00:00:00Z"
 }
 ```
 
-**GET /api/invoices/export?month=YYYY-MM**
+**GET /api/invoices/export?year=YYYY&month=MM**
 
-CSV形式でダウンロード。
+CSV形式でダウンロード（BOM付きUTF-8）。
 
 ```csv
 管理No,委託業務内容,実工数
-E25A001,HMX7-CN2,5.75H
-E25A002,STX10S2VS1,3.25H
+E252019,HMX7-CN2,5.75
+E252020,STX10S2VS1,3.25
 ```
 
-**Content-Type**: `text/csv`
-**Content-Disposition**: `attachment; filename=invoice_2025-01.csv`
+**Content-Type**: `text/csv; charset=utf-8-sig`
+**Content-Disposition**: `attachment; filename=invoice_YYYY-MM.csv`
+
+**GET /api/invoices**
+
+請求書一覧を取得（年・月の降順）。
+
+```json
+// Response (200)
+[
+  {
+    "id": "uuid",
+    "year": 2025,
+    "month": 1,
+    "status": "closed",
+    "closed_at": "2025-02-01T00:00:00Z",
+    "closed_by": "uuid",
+    "created_at": "2025-01-01T00:00:00Z",
+    "updated_at": "2025-02-01T00:00:00Z"
+  }
+]
+```
+
+**DELETE /api/invoices/{invoice_id}**
+
+請求書と関連する明細をCASCADE削除（管理者のみ）。
+
+```json
+// Response (200)
+{
+  "message": "請求書を削除しました"
+}
+```
 
 ---
 
@@ -344,58 +384,169 @@ Fields:
 
 ### 注意点管理 (Chuiten)
 
+#### 注意点カテゴリ
+
 | Method | Path | 説明 |
 |--------|------|------|
-| GET | /api/chuiten/master?category_id={id} | マスタ取得（カテゴリ別） |
-| POST | /api/chuiten/master | マスタ追加 |
-| GET | /api/projects/{id}/chuiten | 案件の注意点一覧 |
-| POST | /api/projects/{id}/chuiten | 注意点追加（マスタから展開 or 手動） |
-| PUT | /api/projects/{id}/chuiten/{itemId} | 注意点更新（チェック・メモ） |
+| **GET** | **/api/chuiten/categories** | カテゴリ一覧取得 |
+| **POST** | **/api/chuiten/categories** | カテゴリ追加（管理者のみ） |
+| **DELETE** | **/api/chuiten/categories/{id}** | カテゴリ削除（管理者のみ） |
 
-**GET /api/chuiten/master?category_id={id}**
+**GET /api/chuiten/categories**
 
 ```json
 // Response (200)
 [
   {
     "id": "uuid",
-    "category_id": "uuid",
-    "category_name": "A板",
-    "target_series": "TC15～",
-    "target_board": "盤",
-    "content": "端子台配置に注意",
-    "author": "田中",
-    "notes": "2024年改訂"
+    "name": "A板",
+    "sort_order": 1
   }
 ]
 ```
 
-**POST /api/projects/{id}/chuiten**
+**POST /api/chuiten/categories**
 
 ```json
-// Request (マスタから展開)
+// Request
 {
-  "master_id": "uuid"
-}
-
-// Request (手動追加)
-{
-  "category_id": "uuid",
-  "content": "カスタム注意点",
-  "notes": "備考"
+  "name": "A板",
+  "sort_order": 1
 }
 
 // Response (201)
 {
   "id": "uuid",
-  "project_id": "uuid",
-  "category_id": "uuid",
-  "content": "端子台配置に注意",
-  "checked": false,
-  "checked_by": null,
-  "checked_at": null,
-  "notes": ""
+  "name": "A板",
+  "sort_order": 1
 }
+```
+
+**DELETE /api/chuiten/categories/{id}**
+
+使用中のカテゴリは削除不可。
+
+```json
+// Response (200)
+{
+  "message": "カテゴリを削除しました"
+}
+
+// Response (400 - 使用中)
+{
+  "detail": "このカテゴリは使用中のため削除できません"
+}
+```
+
+#### 注意点マスタ
+
+| Method | Path | 説明 |
+|--------|------|------|
+| **GET** | **/api/chuiten** | 注意点一覧取得（カテゴリ・シリーズ別フィルタ対応） |
+| **POST** | **/api/chuiten** | 注意点追加（管理者のみ） |
+| **GET** | **/api/chuiten/{id}** | 注意点詳細取得 |
+| **PATCH** | **/api/chuiten/{id}** | 注意点更新（管理者のみ） |
+| **DELETE** | **/api/chuiten/{id}** | 注意点削除（管理者のみ） |
+
+**GET /api/chuiten クエリパラメータ**
+- `category_id`: カテゴリID（UUID）
+- `target_series`: 対象シリーズ（NEX, HMX等）
+
+**GET /api/chuiten**
+
+```json
+// Response (200)
+[
+  {
+    "id": "uuid",
+    "seq_no": 1,
+    "target_series": "NEX",
+    "target_model_pattern": "NEX.*140.*",
+    "category_id": "uuid",
+    "category_name": "A板",
+    "note": "端子台配置に注意",
+    "author": "田中",
+    "remarks": "2024年改訂"
+  }
+]
+```
+
+**POST /api/chuiten**
+
+```json
+// Request
+{
+  "seq_no": 1,
+  "target_series": "NEX",
+  "target_model_pattern": "NEX.*140.*",
+  "category_id": "uuid",
+  "note": "端子台配置に注意",
+  "author": "田中",
+  "remarks": "2024年改訂"
+}
+
+// Response (201)
+{
+  "id": "uuid",
+  "seq_no": 1,
+  "target_series": "NEX",
+  "target_model_pattern": "NEX.*140.*",
+  "category_id": "uuid",
+  "note": "端子台配置に注意",
+  "author": "田中",
+  "remarks": "2024年改訂"
+}
+```
+
+**PATCH /api/chuiten/{id}**
+
+部分更新対応。
+
+```json
+// Request
+{
+  "seq_no": 2,
+  "note": "端子台配置に注意（更新版）"
+}
+
+// Response (200)
+{
+  "id": "uuid",
+  "seq_no": 2,
+  "target_series": "NEX",
+  "target_model_pattern": "NEX.*140.*",
+  "category_id": "uuid",
+  "note": "端子台配置に注意（更新版）",
+  "author": "田中",
+  "remarks": "2024年改訂"
+}
+```
+
+#### 案件別注意点取得
+
+| Method | Path | 説明 |
+|--------|------|------|
+| **GET** | **/api/chuiten/by-project/{project_id}** | 案件の機種に該当する注意点一覧取得 |
+
+**GET /api/chuiten/by-project/{project_id}**
+
+案件の機種（model）から自動的にシリーズを抽出し、該当する注意点をフィルタ。
+
+```json
+// Response (200)
+[
+  {
+    "id": "uuid",
+    "seq_no": 1,
+    "target_series": "NEX",
+    "target_model_pattern": "NEX.*140.*",
+    "category_id": "uuid",
+    "category_name": "A板",
+    "note": "端子台配置に注意",
+    "author": "田中",
+    "remarks": "2024年改訂"
+  }
+]
 ```
 
 ---
