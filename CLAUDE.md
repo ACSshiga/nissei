@@ -158,14 +158,15 @@ User ID: 00000000-0000-4000-8000-000000000000
 4. 作業開始
 ```
 
-### Serenaメモリファイル一覧（8個）
+### 主要Serenaメモリファイル
 - `current_issues_and_priorities.md` - 現在のIssue・優先度（**最重要**）
+- `phase_progress.md` - フェーズ進捗管理（**フェーズ管理時・最重要**）
 - `project_overview.md` - プロジェクト概要
 - `database_specifications.md` - DB詳細仕様
 - `api_specifications.md` - API詳細仕様
 - `system_architecture.md` - システムアーキテクチャ
 - `implementation_status.md` - 実装状況・進捗
-- `material_and_chuiten_specifications.md` - 資料・注意点仕様
+- `material_and_chuiten_specifications.md` - 資料・注意点仕様（nissei固有）
 - `database_api_specifications.md` - 統合仕様（互換性用）
 
 詳細は [ai-rules/nissei/DOCUMENTATION_GUIDE.md](./ai-rules/nissei/DOCUMENTATION_GUIDE.md) を参照

@@ -83,7 +83,7 @@ test-<test-name>       # テスト追加
 - [ ] 関連Issueをリンク（Closes #XX）
 - [ ] レビュアーを指定（人間 or code-reviewerサブエージェント）
 
-詳細は [PR_GUIDELINES.md](./PR_GUIDELINES.md) を参照（プロジェクト固有）。
+詳細は [PR_PROCESS.md](./PR_PROCESS.md) または各プロジェクト固有のPRガイドを参照。
 
 ## 5. コードレビュー
 
@@ -99,7 +99,7 @@ test-<test-name>       # テスト追加
 - Critical問題を修正した場合は**必ず再レビュー**
 - 再レビューでマージ可になるまで繰り返す
 
-詳細は [CODE_REVIEW.md](./CODE_REVIEW.md) を参照（プロジェクト固有）。
+詳細は各プロジェクト固有のレビューガイド（例: nissei/PR_AND_REVIEW.md）を参照。
 
 ## 6. マージ
 
