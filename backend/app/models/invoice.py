@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Date, DateTime, ForeignKey, Boolean
+from sqlalchemy import Column, String, Date, DateTime, ForeignKey, Integer, Numeric
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -10,14 +10,14 @@ class Invoice(Base):
     __tablename__ = "invoices"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    year_month = Column(String, nullable=False, index=True)  # YYYY-MM形式
-    executed_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    executed_at = Column(DateTime, nullable=False)
-    is_locked = Column(Boolean, default=False)  # 締め確定フラグ
-    created_at = Column(DateTime, default=datetime.utcnow)
+    invoice_number = Column(String(50), unique=True, nullable=False, index=True)
+    issue_date = Column(Date, nullable=False)
+    total_amount = Column(Numeric(12, 2), default=0.00, nullable=False)
+    status = Column(String(50), default='draft', nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
-    # Relationships
-    executor = relationship("User")
+    # リレーション
     items = relationship("InvoiceItem", back_populates="invoice", cascade="all, delete-orphan")
 
 
@@ -25,13 +25,12 @@ class InvoiceItem(Base):
     __tablename__ = "invoice_items"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    invoice_id = Column(UUID(as_uuid=True), ForeignKey("invoices.id"), nullable=False)
-    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id"), nullable=False)
-    management_no = Column(String, nullable=False)  # 管理No
-    commission_content = Column(String)  # 業務委託内容
-    actual_hours_decimal = Column(Integer)  # 実工数（時間、小数）※100倍して整数で保存
-    created_at = Column(DateTime, default=datetime.utcnow)
+    invoice_id = Column(UUID(as_uuid=True), ForeignKey("invoices.id", ondelete="CASCADE"), nullable=False)
+    management_no = Column(String(50), nullable=False)
+    machine_no = Column(String(100), nullable=False)
+    actual_hours = Column(Numeric(10, 2), nullable=False)
+    sort_order = Column(Integer, default=0, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
-    # Relationships
+    # リレーション
     invoice = relationship("Invoice", back_populates="items")
-    project = relationship("Project")

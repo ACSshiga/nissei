@@ -122,6 +122,23 @@ export default function DashboardPage() {
             </div>
           </Link>
 
+          {/* 請求書管理カード */}
+          <Link href="/invoices">
+            <div className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition cursor-pointer">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900 mb-2">請求書管理</h2>
+                  <p className="text-gray-600">月次請求書の作成とCSV出力</p>
+                </div>
+                <div className="text-yellow-600">
+                  <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </Link>
+
           {/* マスタ管理カード */}
           <Link href="/masters">
             <div className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition cursor-pointer">

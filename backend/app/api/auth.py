@@ -50,6 +50,18 @@ def get_current_user(
     return response.data[0]
 
 
+def require_admin(
+    current_user: Dict[str, Any] = Depends(get_current_user)
+) -> Dict[str, Any]:
+    """管理者権限を要求"""
+    if not current_user.get("is_admin", False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="管理者権限が必要です"
+        )
+    return current_user
+
+
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def register_user(user_data: UserCreate, db: Client = Depends(get_db)):
     """新規ユーザー登録"""
@@ -78,7 +90,6 @@ def register_user(user_data: UserCreate, db: Client = Depends(get_db)):
         "email": user_data.email,
         "username": user_data.username,
         "hashed_password": hashed_password,
-        "is_active": True,
         "is_admin": False
     }
 
@@ -113,12 +124,6 @@ def login(login_data: LoginRequest, db: Client = Depends(get_db)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="メールアドレスまたはパスワードが正しくありません",
             headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    if not user.get("is_active", True):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="このアカウントは無効化されています"
         )
 
     # アクセストークンを生成
