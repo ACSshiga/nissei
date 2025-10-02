@@ -1,22 +1,23 @@
 from pydantic import BaseModel, Field
 from typing import Optional, List
-from datetime import date, datetime
+from datetime import datetime
 from uuid import UUID
 from decimal import Decimal
 
 
+# 請求書明細
 class InvoiceItemBase(BaseModel):
+    project_id: UUID = Field(..., description="案件ID")
     management_no: str = Field(..., description="管理No")
-    machine_no: str = Field(..., description="機番")
-    actual_hours: Decimal = Field(..., description="実工数")
-    sort_order: int = Field(default=0, description="並び順")
+    work_content: str = Field(..., description="委託業務内容（機番）")
+    total_hours: Decimal = Field(..., description="実工数（時間）")
 
 
 class InvoiceItemCreate(InvoiceItemBase):
     pass
 
 
-class InvoiceItemResponse(InvoiceItemBase):
+class InvoiceItem(InvoiceItemBase):
     id: UUID
     invoice_id: UUID
     created_at: datetime
@@ -25,39 +26,39 @@ class InvoiceItemResponse(InvoiceItemBase):
         from_attributes = True
 
 
+# 請求書ヘッダ
 class InvoiceBase(BaseModel):
-    invoice_number: str = Field(..., description="請求書番号")
-    issue_date: date = Field(..., description="発行日")
-    status: str = Field(default='draft', description="ステータス")
+    year: int = Field(..., description="年")
+    month: int = Field(..., ge=1, le=12, description="月")
 
 
 class InvoiceCreate(InvoiceBase):
-    items: List[InvoiceItemCreate] = Field(default=[], description="請求書明細")
+    pass
 
 
-class InvoiceUpdate(BaseModel):
-    status: Optional[str] = None
-
-
-class InvoiceResponse(InvoiceBase):
+class Invoice(InvoiceBase):
     id: UUID
-    total_amount: Decimal
+    status: str = Field(..., description="ステータス: draft | closed")
+    closed_at: Optional[datetime] = None
+    closed_by: Optional[UUID] = None
     created_at: datetime
     updated_at: datetime
-    items: List[InvoiceItemResponse] = []
 
     class Config:
         from_attributes = True
 
 
-# 請求プレビュー用のレスポンス
-class InvoicePreviewItem(BaseModel):
-    management_no: str
-    machine_no: str
-    actual_hours: Decimal
+# プレビュー用（明細付き）
+class InvoicePreview(Invoice):
+    items: List[InvoiceItem] = []
 
 
-class InvoicePreviewResponse(BaseModel):
-    month: str  # YYYY-MM形式
-    total_hours: Decimal
-    items: List[InvoicePreviewItem]
+# 確定リクエスト
+class InvoiceCloseRequest(BaseModel):
+    pass
+
+
+# CSV出力用リクエスト
+class InvoiceExportRequest(BaseModel):
+    year: int = Field(..., description="年")
+    month: int = Field(..., ge=1, le=12, description="月")
