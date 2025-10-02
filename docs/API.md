@@ -54,10 +54,16 @@ PUT    /api/worklogs/grid         差分パッチ更新
 ### 請求書 (Invoices)
 
 ```
-GET    /api/invoices?month=YYYY-MM       請求プレビュー
-POST   /api/invoices/close               請求締め確定
-GET    /api/invoices/export?month=YYYY-MM CSV出力
+GET    /api/invoices/preview?month=YYYY-MM  請求プレビュー（工数自動集計）
+POST   /api/invoices/close?month=YYYY-MM    請求締め確定（管理者のみ）
+GET    /api/invoices/export?month=YYYY-MM   CSV出力（BOM付きUTF-8）
+GET    /api/invoices                        請求書一覧取得
+GET    /api/invoices/{id}                   請求書詳細取得
+PATCH  /api/invoices/{id}                   請求書更新（管理者のみ）
+DELETE /api/invoices/{id}                   請求書削除（管理者のみ）
 ```
+
+**請求書番号形式**: `INV-YYYYMM-XXX`（例: INV-202510-001）
 
 ### 資料管理 (Materials)
 

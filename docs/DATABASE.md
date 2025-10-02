@@ -11,7 +11,7 @@
 ### コアテーブル
 1. **users** - ユーザー管理
 2. **projects** - 案件管理
-3. **work_logs** - 工数入力
+3. **worklogs** - 工数入力（旧名: work_logs）
 4. **materials** - 資料管理
 5. **invoices** - 請求書
 6. **invoice_items** - 請求書明細
@@ -45,7 +45,7 @@ deadline        - 作図期限
 - `spec_code`: 仕様コード（例: 24AK）
 - `full_model_name`: model + "-" + spec_code（例: NEX140Ⅲ-24AK）
 
-### work_logs（工数）
+### worklogs（工数）
 
 ```
 project_id       - 案件ID
@@ -55,6 +55,25 @@ duration_minutes - 作業時間（分）※15分単位
 start_time       - 開始時刻（オプション）
 end_time         - 終了時刻（オプション）
 work_content     - 作業内容（オプション）
+```
+
+### invoices（請求書）
+
+```
+invoice_number   - 請求書番号（INV-YYYYMM-XXX形式、UNIQUE）
+issue_date       - 発行日
+total_amount     - 合計工数（Decimal 12,2）
+status           - ステータス（draft/sent/paid）
+```
+
+### invoice_items（請求書明細）
+
+```
+invoice_id       - 請求書ID（外部キー）
+management_no    - 管理番号（プロジェクトから）
+machine_no       - 機番（プロジェクトから）
+actual_hours     - 実工数（Decimal 8,2）
+sort_order       - ソート順
 ```
 
 ### materials（資料）
@@ -96,9 +115,11 @@ supabase db push
 1. users
 2. マスタテーブル（6種類）
 3. projects
-4. work_logs
+4. worklogs（work_logsからリネーム）
 5. materials
 6. invoices, invoice_items
+7. projects (management_no, machine_no追加)
+8. create_invoice_with_items() ストアドプロシージャ
 ```
 
 ## 詳細仕様
