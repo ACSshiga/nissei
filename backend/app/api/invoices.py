@@ -1,14 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from supabase import Client
-from typing import Optional, Dict, Any, List
+from typing import Dict, Any, List
 from uuid import UUID
-import uuid
-from datetime import date, datetime
+from datetime import datetime
 from decimal import Decimal
 import io
 import csv
-import re
 import logging
 
 logger = logging.getLogger(__name__)
@@ -16,138 +14,107 @@ logger = logging.getLogger(__name__)
 from app.core.database import get_db
 from app.api.auth import get_current_user, require_admin
 from app.schemas.invoice import (
-    InvoiceCreate,
-    InvoiceUpdate,
-    InvoiceResponse,
-    InvoicePreviewResponse,
-    InvoicePreviewItem,
+    Invoice,
+    InvoicePreview,
+    InvoiceItem,
 )
 
 router = APIRouter()
 
-
-def validate_month_format(month: str) -> tuple[str, str]:
-    """
-    月パラメータを検証し、開始日と終了日を返す
-
-    Args:
-        month: YYYY-MM形式の文字列
-
-    Returns:
-        tuple[str, str]: (start_date, end_date) in YYYY-MM-DD format
-
-    Raises:
-        HTTPException: 不正な月形式の場合
-    """
-    if not re.match(r'^\d{4}-(0[1-9]|1[0-2])$', month):
-        raise HTTPException(
-            status_code=400,
-            detail="月はYYYY-MM形式で指定してください（例: 2025-10）"
-        )
-
-    try:
-        month_date = datetime.strptime(month, "%Y-%m")
-        start_date = month_date.strftime("%Y-%m-01")
-
-        # 次月の1日を計算
-        if month_date.month == 12:
-            next_month = month_date.replace(year=month_date.year + 1, month=1)
-        else:
-            next_month = month_date.replace(month=month_date.month + 1)
-        end_date = next_month.strftime("%Y-%m-01")
-
-        return start_date, end_date
-    except ValueError as e:
-        logger.error(f"Invalid month parameter: {month}, error: {e}")
-        raise HTTPException(status_code=400, detail="不正な月形式です")
+# 定数定義
+INVOICE_STATUS_DRAFT = "draft"
+INVOICE_STATUS_CLOSED = "closed"
 
 
-@router.get("/preview", response_model=InvoicePreviewResponse)
+@router.get("/preview", response_model=InvoicePreview)
 def preview_invoice(
-    month: str = Query(..., description="YYYY-MM形式の月"),
+    year: int = Query(..., description="年"),
+    month: int = Query(..., ge=1, le=12, description="月"),
     current_user: Dict[str, Any] = Depends(get_current_user),
     db: Client = Depends(get_db),
 ):
     """指定月の請求書プレビュー（worklogsから実工数を集計）"""
     try:
-        # 月パラメータを検証
-        start_date, end_date = validate_month_format(month)
+        # 月範囲の計算
+        start_date = f"{year}-{month:02d}-01"
+        if month == 12:
+            end_date = f"{year + 1}-01-01"
+        else:
+            end_date = f"{year}-{month + 1:02d}-01"
 
         # worklogsから指定月の工数を取得（プロジェクト別に集計）
-        worklogs_response = db.table("worklogs").select("""
-            project_id,
-            duration_minutes
-        """).gte("work_date", start_date).lt("work_date", end_date).execute()
-
-        if not worklogs_response.data:
-            return InvoicePreviewResponse(
-                month=month,
-                total_hours=Decimal("0.00"),
-                items=[]
-            )
+        worklogs_response = db.table("work_logs").select(
+            "project_id, duration_minutes"
+        ).gte("work_date", start_date).lt("work_date", end_date).execute()
 
         # プロジェクトIDごとに工数を集計
         project_hours = {}
-        for log in worklogs_response.data:
-            project_id = log["project_id"]
-            minutes = log["duration_minutes"]
-            if project_id not in project_hours:
-                project_hours[project_id] = 0
-            project_hours[project_id] += minutes
+        if worklogs_response.data:
+            for log in worklogs_response.data:
+                project_id = log["project_id"]
+                minutes = log.get("duration_minutes", 0)
+                if project_id not in project_hours:
+                    project_hours[project_id] = 0
+                project_hours[project_id] += minutes
 
-        # プロジェクト情報を取得（N+1問題対策：バッチクエリ）
-        project_ids = list(project_hours.keys())
-        if not project_ids:
-            return InvoicePreviewResponse(
-                month=month,
-                total_hours=Decimal("0.00"),
-                items=[]
-            )
-
-        # in_()で一括取得
-        projects_response = db.table("projects").select(
-            "id, management_no, machine_no"
-        ).in_("id", project_ids).execute()
-
-        projects_data = projects_response.data or []
-
-        if not projects_data:
-            return InvoicePreviewResponse(
-                month=month,
-                total_hours=Decimal("0.00"),
-                items=[]
-            )
-
-        # 請求書明細を作成
+        # プロジェクト情報を取得
         items = []
-        total_minutes = 0
+        if project_hours:
+            project_ids = list(project_hours.keys())
+            projects_response = db.table("projects").select(
+                "id, management_no, machine_no"
+            ).in_("id", project_ids).execute()
 
-        for project in projects_data:
-            project_id = project["id"]
-            minutes = project_hours.get(project_id, 0)
-            hours = Decimal(minutes) / Decimal(60)
+            if projects_response.data:
+                for project in projects_response.data:
+                    project_id = project["id"]
+                    minutes = project_hours.get(project_id, 0)
+                    hours = Decimal(minutes) / Decimal(60)
 
-            # 管理No.と号機No.を取得
-            management_no = project.get("management_no", "")
-            machine_no = project.get("machine_no", "")
-
-            items.append(InvoicePreviewItem(
-                management_no=management_no,
-                machine_no=machine_no,
-                actual_hours=hours.quantize(Decimal("0.01"))
-            ))
-            total_minutes += minutes
-
-        total_hours = (Decimal(total_minutes) / Decimal(60)).quantize(Decimal("0.01"))
+                    items.append(InvoiceItem(
+                        id=UUID("00000000-0000-0000-0000-000000000000"),  # プレビュー用ダミー
+                        invoice_id=UUID("00000000-0000-0000-0000-000000000000"),  # プレビュー用ダミー
+                        project_id=UUID(project_id),
+                        management_no=project.get("management_no", ""),
+                        work_content=project.get("machine_no", ""),
+                        total_hours=hours.quantize(Decimal("0.01")),
+                        created_at=datetime.utcnow()
+                    ))
 
         # 管理Noでソート
         items.sort(key=lambda x: x.management_no)
 
-        return InvoicePreviewResponse(
-            month=month,
-            total_hours=total_hours,
-            items=items
-        )
+        # 既存の請求書を確認
+        existing_invoice = db.table("invoices").select("*").eq(
+            "year", year
+        ).eq("month", month).execute()
+
+        if existing_invoice.data:
+            invoice = existing_invoice.data[0]
+            return InvoicePreview(
+                id=UUID(invoice["id"]),
+                year=invoice["year"],
+                month=invoice["month"],
+                status=invoice["status"],
+                closed_at=invoice.get("closed_at"),
+                closed_by=UUID(invoice["closed_by"]) if invoice.get("closed_by") else None,
+                created_at=datetime.fromisoformat(invoice["created_at"].replace("Z", "+00:00")),
+                updated_at=datetime.fromisoformat(invoice["updated_at"].replace("Z", "+00:00")),
+                items=items
+            )
+        else:
+            # 新規プレビュー
+            return InvoicePreview(
+                id=UUID("00000000-0000-0000-0000-000000000000"),
+                year=year,
+                month=month,
+                status=INVOICE_STATUS_DRAFT,
+                closed_at=None,
+                closed_by=None,
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow(),
+                items=items
+            )
 
     except Exception as e:
         logger.error(f"Invoice preview failed: {e}", exc_info=True)
@@ -157,99 +124,124 @@ def preview_invoice(
         )
 
 
-@router.post("/close", response_model=InvoiceResponse)
+@router.post("/close", response_model=Invoice)
 def close_invoice(
-    month: str = Query(..., description="YYYY-MM形式の月"),
+    year: int = Query(..., description="年"),
+    month: int = Query(..., ge=1, le=12, description="月"),
     current_user: Dict[str, Any] = Depends(require_admin),
     db: Client = Depends(get_db),
 ):
     """請求書を確定（管理者のみ）"""
-    try:
-        # 月パラメータを検証
-        validate_month_format(month)
+    invoice_id = None
+    is_new_invoice = False
 
+    try:
         # プレビューデータを取得
-        preview = preview_invoice(month=month, current_user=current_user, db=db)
+        preview = preview_invoice(year=year, month=month, current_user=current_user, db=db)
 
         if not preview.items:
             raise HTTPException(status_code=400, detail="請求対象の工数がありません")
 
-        # 請求書番号を生成（INV-YYYYMM-001形式）
-        year_month = month.replace('-', '')
+        # 既存の請求書を確認
+        existing = db.table("invoices").select("*").eq(
+            "year", year
+        ).eq("month", month).execute()
 
-        # 同月の既存請求書を確認（SQLインジェクション対策：範囲検索を使用）
-        existing_response = db.table("invoices").select("invoice_number") \
-            .gte("invoice_number", f"INV-{year_month}-001") \
-            .lte("invoice_number", f"INV-{year_month}-999").execute()
+        if existing.data:
+            invoice_id = existing.data[0]["id"]
+            # 確定済みの場合はエラー
+            if existing.data[0]["status"] == INVOICE_STATUS_CLOSED:
+                raise HTTPException(status_code=400, detail="既に確定済みの請求書です")
 
-        seq = 1
-        if existing_response.data:
-            # 最大番号を取得
-            max_num = 0
-            for inv in existing_response.data:
-                num_str = inv["invoice_number"].split('-')[-1]
-                try:
-                    num = int(num_str)
-                    if num > max_num:
-                        max_num = num
-                except ValueError:
-                    pass
-            seq = max_num + 1
-
-        invoice_number = f"INV-{year_month}-{seq:03d}"
-
-        # 請求書明細データを準備（JSONB形式）
-        items_jsonb = []
-        for idx, item in enumerate(preview.items):
-            items_jsonb.append({
-                "management_no": item.management_no,
-                "machine_no": item.machine_no,
-                "actual_hours": str(item.actual_hours),  # Decimal精度保持のため文字列化
-                "sort_order": idx,
-            })
-
-        # ストアドプロシージャを使用してトランザクション保証
-        result = db.rpc(
-            "create_invoice_with_items",
-            {
-                "p_invoice_number": invoice_number,
-                "p_issue_date": str(date.today()),
-                "p_total_amount": str(preview.total_hours),  # Decimal精度保持
-                "p_status": "sent",
-                "p_items": items_jsonb
+            # ステータスを確定に更新
+            update_data = {
+                "status": INVOICE_STATUS_CLOSED,
+                "closed_at": datetime.utcnow().isoformat(),
+                "closed_by": str(current_user["id"]),
+                "updated_at": datetime.utcnow().isoformat()
             }
-        ).execute()
+            db.table("invoices").update(update_data).eq("id", invoice_id).execute()
+
+            # 既存の明細を削除
+            db.table("invoice_items").delete().eq("invoice_id", invoice_id).execute()
+        else:
+            # 新規請求書を作成
+            invoice_data = {
+                "year": year,
+                "month": month,
+                "status": INVOICE_STATUS_CLOSED,
+                "closed_at": datetime.utcnow().isoformat(),
+                "closed_by": str(current_user["id"])
+            }
+            invoice_response = db.table("invoices").insert(invoice_data).execute()
+
+            if not invoice_response.data:
+                raise HTTPException(status_code=500, detail="請求書の作成に失敗しました")
+
+            invoice_id = invoice_response.data[0]["id"]
+            is_new_invoice = True
+
+        # 明細を一括登録（N+1クエリ回避）
+        items_data = [
+            {
+                "invoice_id": invoice_id,
+                "project_id": str(item.project_id),
+                "management_no": item.management_no,
+                "work_content": item.work_content,
+                "total_hours": float(item.total_hours)
+            }
+            for item in preview.items
+        ]
+
+        if items_data:
+            db.table("invoice_items").insert(items_data).execute()
+
+        # 確定した請求書を取得
+        result = db.table("invoices").select("*").eq("id", invoice_id).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="請求書の作成に失敗しました")
+            raise HTTPException(status_code=500, detail="請求書の取得に失敗しました")
 
-        invoice_id = result.data
-
-        # 作成した請求書を取得（明細含む）
-        return get_invoice(invoice_id=UUID(invoice_id), current_user=current_user, db=db)
+        invoice = result.data[0]
+        return Invoice(
+            id=UUID(invoice["id"]),
+            year=invoice["year"],
+            month=invoice["month"],
+            status=invoice["status"],
+            closed_at=datetime.fromisoformat(invoice["closed_at"].replace("Z", "+00:00")) if invoice.get("closed_at") else None,
+            closed_by=UUID(invoice["closed_by"]) if invoice.get("closed_by") else None,
+            created_at=datetime.fromisoformat(invoice["created_at"].replace("Z", "+00:00")),
+            updated_at=datetime.fromisoformat(invoice["updated_at"].replace("Z", "+00:00"))
+        )
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Invoice creation failed: {e}", exc_info=True)
+        logger.error(f"Invoice close failed: {e}", exc_info=True)
+        # エラー時のロールバック相当処理（新規作成の場合のみ削除）
+        if is_new_invoice and invoice_id:
+            try:
+                db.table("invoice_items").delete().eq("invoice_id", invoice_id).execute()
+                db.table("invoices").delete().eq("id", invoice_id).execute()
+            except Exception as rollback_error:
+                logger.error(f"Rollback failed: {rollback_error}", exc_info=True)
+
         raise HTTPException(
             status_code=500,
-            detail="請求書の作成に失敗しました"
+            detail="請求書の確定に失敗しました"
         )
 
 
 @router.get("/export")
 def export_invoice_csv(
-    month: str = Query(..., description="YYYY-MM形式の月"),
+    year: int = Query(..., description="年"),
+    month: int = Query(..., ge=1, le=12, description="月"),
     current_user: Dict[str, Any] = Depends(get_current_user),
     db: Client = Depends(get_db),
 ):
     """請求書CSVエクスポート"""
-    # 月パラメータを検証
-    validate_month_format(month)
-
     # プレビューデータを取得
-    preview = preview_invoice(month=month, current_user=current_user, db=db)
+    preview = preview_invoice(year=year, month=month, current_user=current_user, db=db)
 
     if not preview.items:
         raise HTTPException(status_code=404, detail="請求対象の工数がありません")
@@ -265,8 +257,8 @@ def export_invoice_csv(
     for item in preview.items:
         writer.writerow([
             item.management_no,
-            item.machine_no,
-            f"{item.actual_hours}H"
+            item.work_content,
+            f"{item.total_hours}"
         ])
 
     # StreamingResponseで返す
@@ -275,89 +267,38 @@ def export_invoice_csv(
         iter([output.getvalue().encode('utf-8-sig')]),  # BOM付きUTF-8
         media_type="text/csv",
         headers={
-            "Content-Disposition": f"attachment; filename=invoice_{month}.csv"
+            "Content-Disposition": f"attachment; filename=invoice_{year}-{month:02d}.csv"
         }
     )
 
 
-@router.get("/{invoice_id}", response_model=InvoiceResponse)
-def get_invoice(
-    invoice_id: UUID,
-    current_user: Dict[str, Any] = Depends(get_current_user),
-    db: Client = Depends(get_db),
-):
-    """請求書詳細を取得"""
-    # 請求書を取得
-    invoice_response = db.table("invoices").select("*").eq("id", str(invoice_id)).execute()
-
-    if not invoice_response.data:
-        raise HTTPException(status_code=404, detail="請求書が見つかりません")
-
-    invoice = invoice_response.data[0]
-
-    # 明細を取得
-    items_response = db.table("invoice_items").select("*").eq(
-        "invoice_id", str(invoice_id)
-    ).order("sort_order").execute()
-
-    invoice["items"] = items_response.data or []
-
-    return invoice
-
-
-@router.get("", response_model=List[InvoiceResponse])
+@router.get("", response_model=List[Invoice])
 def list_invoices(
-    status: Optional[str] = Query(None, description="ステータスフィルタ"),
     current_user: Dict[str, Any] = Depends(get_current_user),
     db: Client = Depends(get_db),
 ):
     """請求書一覧を取得"""
-    query = db.table("invoices").select("*")
-
-    if status:
-        query = query.eq("status", status)
-
-    query = query.order("issue_date", desc=True)
-
-    invoices_response = query.execute()
+    invoices_response = db.table("invoices").select("*").order(
+        "year", desc=True
+    ).order("month", desc=True).execute()
 
     if not invoices_response.data:
         return []
 
-    # 各請求書の明細を取得
+    invoices = []
     for invoice in invoices_response.data:
-        items_response = db.table("invoice_items").select("*").eq(
-            "invoice_id", invoice["id"]
-        ).order("sort_order").execute()
-        invoice["items"] = items_response.data or []
+        invoices.append(Invoice(
+            id=UUID(invoice["id"]),
+            year=invoice["year"],
+            month=invoice["month"],
+            status=invoice["status"],
+            closed_at=datetime.fromisoformat(invoice["closed_at"].replace("Z", "+00:00")) if invoice.get("closed_at") else None,
+            closed_by=UUID(invoice["closed_by"]) if invoice.get("closed_by") else None,
+            created_at=datetime.fromisoformat(invoice["created_at"].replace("Z", "+00:00")),
+            updated_at=datetime.fromisoformat(invoice["updated_at"].replace("Z", "+00:00"))
+        ))
 
-    return invoices_response.data
-
-
-@router.patch("/{invoice_id}", response_model=InvoiceResponse)
-def update_invoice(
-    invoice_id: UUID,
-    invoice_data: InvoiceUpdate,
-    current_user: Dict[str, Any] = Depends(require_admin),
-    db: Client = Depends(get_db),
-):
-    """請求書を更新（管理者のみ、ステータス変更のみ）"""
-    # 既存の請求書を確認
-    existing = db.table("invoices").select("*").eq("id", str(invoice_id)).execute()
-
-    if not existing.data:
-        raise HTTPException(status_code=404, detail="請求書が見つかりません")
-
-    # 更新
-    update_dict = invoice_data.model_dump(exclude_unset=True, mode="json")
-    update_dict["updated_at"] = datetime.utcnow().isoformat()
-
-    updated_response = db.table("invoices").update(update_dict).eq("id", str(invoice_id)).execute()
-
-    if not updated_response.data:
-        raise HTTPException(status_code=500, detail="請求書の更新に失敗しました")
-
-    return get_invoice(invoice_id=invoice_id, current_user=current_user, db=db)
+    return invoices
 
 
 @router.delete("/{invoice_id}")
@@ -373,7 +314,10 @@ def delete_invoice(
     if not existing.data:
         raise HTTPException(status_code=404, detail="請求書が見つかりません")
 
-    # 削除（invoice_itemsも自動削除される）
+    # 明細を削除
+    db.table("invoice_items").delete().eq("invoice_id", str(invoice_id)).execute()
+
+    # 請求書を削除
     db.table("invoices").delete().eq("id", str(invoice_id)).execute()
 
     return {"message": "請求書を削除しました"}
