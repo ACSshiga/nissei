@@ -13,10 +13,6 @@ class InvoiceItemBase(BaseModel):
     total_hours: Decimal = Field(..., description="実工数（時間）")
 
 
-class InvoiceItemCreate(InvoiceItemBase):
-    pass
-
-
 class InvoiceItem(InvoiceItemBase):
     id: UUID
     invoice_id: UUID
@@ -30,10 +26,6 @@ class InvoiceItem(InvoiceItemBase):
 class InvoiceBase(BaseModel):
     year: int = Field(..., description="年")
     month: int = Field(..., ge=1, le=12, description="月")
-
-
-class InvoiceCreate(InvoiceBase):
-    pass
 
 
 class Invoice(InvoiceBase):
@@ -51,14 +43,3 @@ class Invoice(InvoiceBase):
 # プレビュー用（明細付き）
 class InvoicePreview(Invoice):
     items: List[InvoiceItem] = []
-
-
-# 確定リクエスト
-class InvoiceCloseRequest(BaseModel):
-    pass
-
-
-# CSV出力用リクエスト
-class InvoiceExportRequest(BaseModel):
-    year: int = Field(..., description="年")
-    month: int = Field(..., ge=1, le=12, description="月")

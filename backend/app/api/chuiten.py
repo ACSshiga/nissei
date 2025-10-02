@@ -4,6 +4,7 @@ from typing import Optional, Dict, Any, List
 from uuid import UUID
 from datetime import datetime
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +58,30 @@ def create_chuiten_category(
             status_code=500,
             detail="カテゴリの追加に失敗しました"
         )
+
+
+@router.delete("/categories/{category_id}")
+def delete_chuiten_category(
+    category_id: UUID,
+    current_user: Dict[str, Any] = Depends(require_admin),
+    db: Client = Depends(get_db),
+):
+    """注意点カテゴリを削除（管理者のみ）"""
+    # 既存チェック
+    existing = db.table("master_chuiten_category").select("*").eq("id", str(category_id)).execute()
+
+    if not existing.data:
+        raise HTTPException(status_code=404, detail="カテゴリが見つかりません")
+
+    # 使用中かチェック
+    in_use = db.table("master_chuiten").select("id").eq("category_id", str(category_id)).limit(1).execute()
+    if in_use.data:
+        raise HTTPException(status_code=400, detail="このカテゴリは使用中のため削除できません")
+
+    # 削除
+    db.table("master_chuiten_category").delete().eq("id", str(category_id)).execute()
+
+    return {"message": "カテゴリを削除しました"}
 
 
 # ==================== 注意点管理 ====================
@@ -255,18 +280,15 @@ def get_chuiten_by_project(
             raise HTTPException(status_code=404, detail="案件が見つかりません")
 
         # machine_noやmodelから対象シリーズを推定
-        # 簡易実装: modelからシリーズ名を抽出（例: NEX140Ⅲ → NEX）
+        # modelからシリーズ名を抽出（例: NEX140Ⅲ → NEX）
         model = project.data[0].get("model", "")
         series = None
 
         if model:
-            # 先頭の英字部分をシリーズとする
-            for i, char in enumerate(model):
-                if not char.isalpha():
-                    series = model[:i]
-                    break
-            if not series:
-                series = model
+            # 正規表現で先頭の英字部分を抽出
+            match = re.match(r'^([A-Za-z]+)', model)
+            if match:
+                series = match.group(1)
 
         # 関連する注意点を取得
         query = db.table("master_chuiten").select("""
