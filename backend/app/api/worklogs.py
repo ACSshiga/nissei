@@ -41,13 +41,21 @@ def create_worklog(
         "duration_minutes": worklog_dict["duration_minutes"],
         "user_id": current_user["id"],
     }
-    # オプションフィールド（start_time, end_timeは未実装）
-    # "start_time": worklog_dict.get("start_time"),
-    # "end_time": worklog_dict.get("end_time"),
+    # オプションフィールド
+    if "start_time" in worklog_dict:
+        new_worklog["start_time"] = worklog_dict["start_time"]
+    if "end_time" in worklog_dict:
+        new_worklog["end_time"] = worklog_dict["end_time"]
     if "work_content" in worklog_dict:
         new_worklog["work_content"] = worklog_dict["work_content"]
 
-    worklog_response = db.table("worklogs").insert(new_worklog).execute()
+    try:
+        worklog_response = db.table("work_logs").insert(new_worklog).execute()
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"工数入力の作成に失敗しました: {str(e)}"
+        )
 
     if not worklog_response.data:
         raise HTTPException(
@@ -55,8 +63,8 @@ def create_worklog(
             detail="工数入力の作成に失敗しました"
         )
 
-    # 案件の実績工数を更新
-    new_actual_hours = (project.get("actual_hours") or 0) + worklog_data.duration_minutes
+    # 案件の実績工数を更新（分→時間に変換）
+    new_actual_hours = (project.get("actual_hours") or 0) + (worklog_data.duration_minutes / 60.0)
     db.table("projects").update({"actual_hours": new_actual_hours}).eq("id", str(worklog_data.project_id)).execute()
 
     return worklog_response.data[0]
@@ -73,7 +81,7 @@ def list_worklogs(
     db: Client = Depends(get_db),
 ):
     """工数入力一覧を取得"""
-    query = db.table("worklogs").select("*")
+    query = db.table("work_logs").select("*")
 
     # フィルタリング
     if project_id:
@@ -84,7 +92,7 @@ def list_worklogs(
         query = query.eq("user_id", str(user_id))
 
     # 総件数取得
-    count_query = db.table("worklogs").select("id", count="exact")
+    count_query = db.table("work_logs").select("id", count="exact")
     if project_id:
         count_query = count_query.eq("project_id", str(project_id))
     if work_date:
@@ -114,7 +122,7 @@ def get_worklog(
     db: Client = Depends(get_db),
 ):
     """工数入力詳細を取得"""
-    response = db.table("worklogs").select("*").eq("id", str(worklog_id)).execute()
+    response = db.table("work_logs").select("*").eq("id", str(worklog_id)).execute()
     if not response.data:
         raise HTTPException(status_code=404, detail="工数入力が見つかりません")
     return response.data[0]
@@ -128,7 +136,7 @@ def update_worklog(
     db: Client = Depends(get_db),
 ):
     """工数入力を更新"""
-    worklog_response = db.table("worklogs").select("*").eq("id", str(worklog_id)).execute()
+    worklog_response = db.table("work_logs").select("*").eq("id", str(worklog_id)).execute()
     if not worklog_response.data:
         raise HTTPException(status_code=404, detail="工数入力が見つかりません")
 
@@ -150,11 +158,11 @@ def update_worklog(
         update_data["work_date"] = worklog_dict["work_date"]
     if "duration_minutes" in worklog_dict:
         update_data["duration_minutes"] = worklog_dict["duration_minutes"]
-    # オプションフィールド（start_time, end_timeは未実装）
-    # if "start_time" in worklog_dict:
-    #     update_data["start_time"] = worklog_dict["start_time"]
-    # if "end_time" in worklog_dict:
-    #     update_data["end_time"] = worklog_dict["end_time"]
+    # オプションフィールド
+    if "start_time" in worklog_dict:
+        update_data["start_time"] = worklog_dict["start_time"]
+    if "end_time" in worklog_dict:
+        update_data["end_time"] = worklog_dict["end_time"]
     if "work_content" in worklog_dict:
         update_data["work_content"] = worklog_dict["work_content"]
 
@@ -163,30 +171,36 @@ def update_worklog(
 
     # プロジェクトが変更される場合、両方のプロジェクトの実績工数を調整
     if new_project_id != old_project_id:
-        # 旧プロジェクトから実績工数を減算
+        # 旧プロジェクトから実績工数を減算（分→時間に変換）
         old_project_response = db.table("projects").select("actual_hours").eq("id", old_project_id).execute()
         if old_project_response.data:
             old_project = old_project_response.data[0]
-            old_actual_hours = (old_project.get("actual_hours") or 0) - old_duration
+            old_actual_hours = (old_project.get("actual_hours") or 0) - (old_duration / 60.0)
             db.table("projects").update({"actual_hours": max(0, old_actual_hours)}).eq("id", old_project_id).execute()
 
-        # 新プロジェクトに実績工数を加算
+        # 新プロジェクトに実績工数を加算（分→時間に変換）
         new_project_response = db.table("projects").select("actual_hours").eq("id", new_project_id).execute()
         if new_project_response.data:
             new_project = new_project_response.data[0]
-            new_actual_hours = (new_project.get("actual_hours") or 0) + new_duration
+            new_actual_hours = (new_project.get("actual_hours") or 0) + (new_duration / 60.0)
             db.table("projects").update({"actual_hours": new_actual_hours}).eq("id", new_project_id).execute()
 
-    # 作業時間のみが変更される場合（プロジェクトは同じ）、実績工数を調整
+    # 作業時間のみが変更される場合（プロジェクトは同じ）、実績工数を調整（分→時間に変換）
     elif new_duration != old_duration:
         project_response = db.table("projects").select("actual_hours").eq("id", old_project_id).execute()
         if project_response.data:
             project = project_response.data[0]
-            new_actual_hours = (project.get("actual_hours") or 0) - old_duration + new_duration
+            new_actual_hours = (project.get("actual_hours") or 0) - (old_duration / 60.0) + (new_duration / 60.0)
             db.table("projects").update({"actual_hours": new_actual_hours}).eq("id", old_project_id).execute()
 
     # 更新
-    response = db.table("worklogs").update(update_data).eq("id", str(worklog_id)).execute()
+    try:
+        response = db.table("work_logs").update(update_data).eq("id", str(worklog_id)).execute()
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"工数入力の更新に失敗しました: {str(e)}"
+        )
 
     if not response.data:
         raise HTTPException(status_code=500, detail="工数入力の更新に失敗しました")
@@ -201,7 +215,7 @@ def delete_worklog(
     db: Client = Depends(get_db),
 ):
     """工数入力を削除"""
-    worklog_response = db.table("worklogs").select("*").eq("id", str(worklog_id)).execute()
+    worklog_response = db.table("work_logs").select("*").eq("id", str(worklog_id)).execute()
     if not worklog_response.data:
         raise HTTPException(status_code=404, detail="工数入力が見つかりません")
 
@@ -211,15 +225,15 @@ def delete_worklog(
     if worklog["user_id"] != current_user["id"]:
         raise HTTPException(status_code=403, detail="この工数入力を削除する権限がありません")
 
-    # 案件の実績工数を減算
+    # 案件の実績工数を減算（分→時間に変換）
     project_response = db.table("projects").select("actual_hours").eq("id", worklog["project_id"]).execute()
     if project_response.data:
         project = project_response.data[0]
-        new_actual_hours = (project.get("actual_hours") or 0) - worklog["duration_minutes"]
-        db.table("projects").update({"actual_hours": new_actual_hours}).eq("id", worklog["project_id"]).execute()
+        new_actual_hours = (project.get("actual_hours") or 0) - (worklog["duration_minutes"] / 60.0)
+        db.table("projects").update({"actual_hours": max(0, new_actual_hours)}).eq("id", worklog["project_id"]).execute()
 
     # 削除
-    db.table("worklogs").delete().eq("id", str(worklog_id)).execute()
+    db.table("work_logs").delete().eq("id", str(worklog_id)).execute()
     return None
 
 
@@ -238,7 +252,7 @@ def get_worklog_summary(
     project = project_response.data[0]
 
     # 全工数データを取得
-    worklogs_response = db.table("worklogs").select("user_id, duration_minutes, work_date").eq("project_id", str(project_id)).execute()
+    worklogs_response = db.table("work_logs").select("user_id, duration_minutes, work_date").eq("project_id", str(project_id)).execute()
     worklogs = worklogs_response.data
 
     # ユーザー名を取得

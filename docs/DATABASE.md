@@ -24,7 +24,10 @@ projects
 ├── description
 ├── status
 ├── start_date
-└── end_date
+├── end_date
+├── estimated_hours
+├── actual_hours
+└── management_no
 
 work_logs
 ├── id (PK)
@@ -32,6 +35,8 @@ work_logs
 ├── user_id (FK → users.id)
 ├── work_date
 ├── duration_minutes
+├── start_time
+├── end_time
 └── work_content
 
 materials
@@ -102,6 +107,9 @@ work_types (マスタ)
 | status | VARCHAR(50) | NO | 'planning' | ステータス（planning/in_progress/completed） |
 | start_date | DATE | YES | NULL | 開始日 |
 | end_date | DATE | YES | NULL | 終了日 |
+| estimated_hours | DECIMAL(10,2) | NO | 0.00 | 予定工数（時間） |
+| actual_hours | DECIMAL(10,2) | NO | 0.00 | 実績工数（時間） |
+| management_no | VARCHAR(50) | YES | NULL | 管理番号（ユニーク） |
 | created_at | TIMESTAMP | NO | CURRENT_TIMESTAMP | 作成日時 |
 | updated_at | TIMESTAMP | NO | CURRENT_TIMESTAMP | 更新日時 |
 
@@ -125,11 +133,11 @@ work_types (マスタ)
 | user_id | UUID | NO | - | ユーザーID（外部キー） |
 | work_date | DATE | NO | - | 作業日 |
 | duration_minutes | INTEGER | NO | - | 作業時間（分）※15分単位 |
+| start_time | TIME | YES | NULL | 作業開始時刻 |
+| end_time | TIME | YES | NULL | 作業終了時刻 |
 | work_content | TEXT | YES | NULL | 作業内容 |
 | created_at | TIMESTAMP | NO | CURRENT_TIMESTAMP | 作成日時 |
 | updated_at | TIMESTAMP | NO | CURRENT_TIMESTAMP | 更新日時 |
-
-> **注**: `start_time`（開始時刻）と`end_time`（終了時刻）フィールドは将来的な拡張のために設計されていますが、現在は実装されていません（Issue #23, #24参照）。
 
 **インデックス**
 - PRIMARY KEY (id)
